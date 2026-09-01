@@ -1,165 +1,237 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قمر الشام - ديوان الحكم</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Tahoma, Arial, sans-serif;
+        // ============ البروفايل ============
+        function showUserProfile(name, avatar, isCurrentUser = false) {
+            document.getElementById('pModalName').textContent = name;
+            document.getElementById('pModalAvatar').src = avatar;
+            
+            const actionsRow = document.getElementById('profileActionsRow');
+            if (isCurrentUser || name === currentUser.name) {
+                actionsRow.style.display = 'none';
+            } else {
+                actionsRow.style.display = 'flex';
+            }
+            
+            document.getElementById('profileModal').classList.add('show');
+            updateBotMemoryUI();
         }
-        body {
-            background-color: #0d1117;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('show');
         }
-        /* الهيدر العلوي */
-        .header {
-            background-color: #161b22;
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #30363d;
+        function changeNamePrompt() {
+            const newName = prompt("أدخل الاسم الجديد:", currentUser.name);
+            if (newName && newName.trim()) {
+                currentUser.name = newName.trim();
+                document.getElementById('pModalName').textContent = currentUser.name;
+            }
         }
-        .header-title {
-            color: #f0883e;
-            font-size: 16px;
-            font-weight: bold;
+        function previewAvatarImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tempAvatar = e.target.result;
+                    document.getElementById('pModalAvatar').src = tempAvatar;
+                };
+                reader.readAsDataURL(file);
+            }
         }
-        /* منطقة الشات والرسائل */
-        .chat-container {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        function previewCoverImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tempCover = e.target.result;
+                    document.getElementById('modalCoverArea').style.backgroundImage = `url('${tempCover}')`;
+                };
+                reader.readAsDataURL(file);
+            }
         }
-        .message {
-            background-color: #21262d;
-            padding: 10px 14px;
-            border-radius: 8px;
-            max-width: 85%;
-            word-break: normal;
-            overflow-wrap: break-word;
-            line-height: 1.6;
-            font-size: 14px;
+        function switchProfileTab(tabName, element) {
+            document.querySelectorAll('.p-tab-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.profile-tab-body').forEach(body => body.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
         }
-        .message .username {
-            color: #58a6ff;
-            font-weight: bold;
-            margin-bottom: 4px;
-            display: block;
+        function changeProfileBg(color, element) {
+            document.querySelectorAll('#profileBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            document.querySelector('.profile-box').style.background = color;
         }
-        /* تنسيق الصور والإيموجيات داخل الشات */
-        .message img, .emoji-box img {
-            width: 32px;
-            height: 32px;
-            object-fit: contain;
-            vertical-align: middle;
-            margin: 2px;
+        function changeNameColor(color, element) {
+            document.querySelectorAll('#nameColors .color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('pModalName').style.color = color;
         }
-        /* شريط الإيموجيات والسفلية */
-        .emoji-bar {
-            display: flex;
-            gap: 8px;
-            padding: 8px 15px;
-            background-color: #161b22;
-            overflow-x: auto;
-            border-top: 1px solid #30363d;
+        function changeNameBg(color, element) {
+            document.querySelectorAll('#nameBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('pModalName').style.background = color;
         }
-        .emoji-bar img {
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            transition: transform 0.1s;
+        function addNameGif(gifSrc, element) {
+            document.querySelectorAll('.name-gif-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            currentUser.nameGif = gifSrc;
+            const nameElement = document.getElementById('pModalName');
+            nameElement.innerHTML = `${currentUser.name} <img src="${gifSrc}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
+            localStorage.setItem('user_name_gif', gifSrc);
         }
-        .emoji-bar img:hover {
-            transform: scale(1.2);
+        function previewProfile() {
+            appendMessage("👁️ معاينة", currentUser.avatar, "هكذا سيظهر بروفايلك للآخرين ✨", true);
         }
-        /* صندوق الإرسال */
-        .footer-input {
-            display: flex;
-            padding: 10px 15px;
-            background-color: #161b22;
-            gap: 10px;
-            align-items: center;
+        function saveProfileChanges() {
+            currentUser.avatar = tempAvatar;
+            currentUser.cover = tempCover;
+            localStorage.setItem('user_avatar', currentUser.avatar);
+            localStorage.setItem('user_cover', currentUser.cover);
+            localStorage.setItem('user_name', currentUser.name);
+            if (currentUser.nameGif) {
+                localStorage.setItem('user_name_gif', currentUser.nameGif);
+            }
+            appendMessage("💾 حفظ", currentUser.avatar, "تم حفظ تغييرات البروفايل بنجاح ✅", true);
+            closeProfileModal();
         }
-        .footer-input input {
-            flex: 1;
-            background-color: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 20px;
-            padding: 10px 15px;
-            color: #fff;
-            outline: none;
-            font-size: 14px;
+        function toggleFriend() {
+            isFriend = !isFriend;
+            const btn = document.getElementById('friendBtn');
+            if (isFriend) { btn.textContent = '✅ صديق'; btn.classList.add('friended'); } 
+            else { btn.textContent = '➕ إضافة صديق'; btn.classList.remove('friended'); }
         }
-        .footer-input button {
-            background-color: #d1862d;
-            border: none;
-            border-radius: 20px;
-            color: #fff;
-            padding: 8px 18px;
-            font-weight: bold;
-            cursor: pointer;
+        function toggleLike() {
+            isLiked = !isLiked;
+            const btn = document.getElementById('likeBtn');
+            if (isLiked) { btn.textContent = '💖 معجب'; btn.classList.add('liked'); } 
+            else { btn.textContent = '💖 إعجاب'; btn.classList.remove('liked'); }
         }
-    </style>
-</head>
-<body>
+        function toggleIgnore() {
+            isIgnored = !isIgnored;
+            const btn = document.getElementById('ignoreBtn');
+            if (isIgnored) { btn.textContent = '🚫 تم التجاهل'; btn.classList.add('ignored'); } 
+            else { btn.textContent = '🚫 تجاهل'; btn.classList.remove('ignored'); }
+        }
+        function sendPrivateMessage() {
+            const msg = prompt("أرسل رسالة خاصة:");
+            if (msg && msg.trim()) {
+                appendMessage("💬 رسالة خاصة", currentUser.avatar, msg, false);
+                closeProfileModal();
+            }
+        }
 
-    <div class="header">
-        <div class="header-title">👑 قمر الشام - ديوان الحكم</div>
-    </div>
+        // ============ الحالة اليومية ============
+        function setStatusType(type, element) {
+            currentStatusType = type;
+            document.querySelectorAll('.status-type-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            
+            const textInput = document.getElementById('dailyStatusInput');
+            const fileInput = document.getElementById('statusFileInput');
+            const mediaPreview = document.getElementById('statusMediaPreview');
+            
+            if (type === 'text') {
+                textInput.style.display = 'block';
+                fileInput.style.display = 'none';
+                mediaPreview.style.display = 'none';
+                textInput.placeholder = 'أضف حالة يومية...';
+            } else {
+                textInput.style.display = 'none';
+                fileInput.style.display = 'block';
+                mediaPreview.style.display = 'block';
+            }
+        }
 
-    <div class="chat-container" id="chatContainer">
-        <div class="message">
-            <span class="username">بوت قمر الشام 🤖</span>
-            مرحباً بك يا ملك عماد تحت ياسمين قمر الشام ✨
-        </div>
-        <div class="message">
-            <span class="username">عماد</span>
-            أهلاً بالجميع، الروم العام جاهز والميكات شغالة! <img src="10s.gif" alt="emoji"> <img src="11.gif" alt="emoji"> <img src="20.gif" alt="emoji">
-        </div>
-    </div>
+        function previewStatusFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                tempStatusFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('statusMediaPreview');
+                    preview.innerHTML = '';
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        preview.appendChild(img);
+                    } else if (file.type.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.src = e.target.result;
+                        video.controls = true;
+                        preview.appendChild(video);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
 
-    <div class="emoji-bar">
-        <img src="10s.gif" alt="emoji">
-        <img src="11.gif" alt="emoji">
-        <img src="20.gif" alt="emoji">
-        <img src="3962.gif" alt="emoji">
-        <img src="5.gif" alt="emoji">
-        <img src="a21.gif" alt="emoji">
-        <img src="a22.gif" alt="emoji">
-        <img src="a25.gif" alt="emoji">
-        <img src="a26.gif" alt="emoji">
-        <img src="a27.gif" alt="emoji">
-        <img src="a28.gif" alt="emoji">
-    </div>
+        function addDailyStatus() {
+            if (currentStatusType === 'text') {
+                const statusInput = document.getElementById('dailyStatusInput');
+                const status = statusInput.value.trim();
+                if (status) {
+                    localStorage.setItem('daily_status', status);
+                    localStorage.setItem('daily_status_type', 'text');
+                    localStorage.setItem('daily_status_time', Date.now());
+                    statusInput.value = '';
+                    appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة الحالة: "${status}"`, true);
+                }
+            } else if (tempStatusFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    localStorage.setItem('daily_status', e.target.result);
+                    localStorage.setItem('daily_status_type', currentStatusType);
+                    localStorage.setItem('daily_status_time', Date.now());
+                    appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة ${currentStatusType === 'image' ? 'صورة' : 'فيديو'} للحالة اليومية`, true);
+                };
+                reader.readAsDataURL(tempStatusFile);
+            }
+        }
 
-    <div class="footer-input">
-        <input type="text" id="messageInput" placeholder="اكتب رسالتك...">
-        <button onclick="sendMessage()">إرسال</button>
-    </div>
+        // ============ الموسيقى ============
+        function toggleMusic() {
+            musicPlaying = !musicPlaying;
+            const btn = document.getElementById('musicBtn');
+            if (musicPlaying) { btn.textContent = '⏸️ إيقاف مؤقت'; btn.classList.add('playing'); } 
+            else { btn.textContent = '🎵 تشغيل موسيقى'; btn.classList.remove('playing'); }
+        }
+        function changeMusicTrack() {
+            currentMusicTrack = (currentMusicTrack + 1) % musicTracks.length;
+            if (musicPlaying) {
+                appendMessage("🎵 موسيقى", currentUser.avatar, `تغيير المقطوعة إلى: ${musicTracks[currentMusicTrack].name}`, true);
+            }
+        }
+        function stopMusic() {
+            musicPlaying = false;
+            document.getElementById('musicBtn').textContent = '🎵 تشغيل موسيقى';
+            document.getElementById('musicBtn').classList.remove('playing');
+        }
 
-    <script>
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const container = document.getElementById('chatContainer');
-            if(input.value.trim() !== "") {
-                const div = document.createElement('div');
-                div.className = 'message';
-                div.innerHTML = `<span class="username">عماد</span> ${input.value}`;
-                container.appendChild(div);
-                input.value = "";
-                container.scrollTop = container.scrollHeight;
+        // ============ التنقل السفلي ============
+        function bottomNavAction(action) {
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-tab-btn').classList.add('active');
+            if (action === 'options') {
+                showUserProfile(currentUser.name, currentUser.avatar, true);
+            } else if (action === 'online') {
+                let userList = "المتصلون الآن:\n";
+                onlineUsers.forEach(user => { userList += `${user.rank} ${user.name} 🟢\n`; });
+                appendMessage("👥 المتصلين", "17.gif", userList, true);
+            } else if (action === 'home') {
+                appendMessage("🏠 النظام", "17.gif", "أهلاً بك في الرئيسية!", true);
+            }
+        }
+
+        // ============ تحميل البيانات ============
+        function loadSavedData() {
+            const savedName = localStorage.getItem('user_name');
+            if (savedName) currentUser.name = savedName;
+            const savedAvatar = localStorage.getItem('user_avatar');
+            if (savedAvatar) { currentUser.avatar = savedAvatar; tempAvatar = savedAvatar; }
+            const savedCover = localStorage.getItem('user_cover');
+            if (savedCover) { currentUser.cover = savedCover; tempCover = savedCover; }
+            const savedNameGif = localStorage.getItem('user_name_gif');
+            if (savedNameGif) {
+                currentUser.nameGif = savedNameGif;
+                const nameElement = document.getElementById('pModalName');
+                if (nameElement) {
+                    nameElement.innerHTML = `${currentUser.name} <img src="${savedNameGif}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
+                }
             }
         }
     </script>
