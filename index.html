@@ -2,1164 +2,166 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شات قمر الشام - النظام الملكي الذكي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قمر الشام - ديوان الحكم</title>
     <style>
-        :root {
-            --accent-gold: #d97706;
-            --accent-pink: #ec4899;
-            --accent-purple: #8b5cf6;
-            --text-main: #1f2937;
-            --text-muted: #4b5563;
-            --border-color: rgba(0, 0, 0, 0.1);
-            --success-green: #10b981;
-            --danger-red: #ef4444;
-            --profile-bg: #1f2937;
-            --profile-name-color: #ffffff;
-            --profile-name-bg: rgba(0,0,0,0.5);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, Arial, sans-serif;
         }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
-        html, body { 
-            width: 100%; height: 100%; background-color: #ffffff; color: var(--text-main); 
-            overflow: hidden; position: fixed; display: flex; flex-direction: column; 
+        body {
+            background-color: #0d1117;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
-        
-        header { 
-            background: linear-gradient(135deg, #1f2937, #374151);
-            border-bottom: 2px solid var(--accent-gold); 
-            padding: 0 12px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            height: 50px; flex-shrink: 0; z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        /* الهيدر العلوي */
+        .header {
+            background-color: #161b22;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
         }
-        .header-title { 
-            font-size: 1rem; font-weight: bold; 
-            background: linear-gradient(135deg, var(--accent-gold), #fbbf24);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .toggle-btn { 
-            background: rgba(255,255,255,0.1); 
-            border: 1px solid rgba(255,255,255,0.2); 
-            color: #fff; padding: 6px 12px; 
-            border-radius: 8px; cursor: pointer; 
-            font-size: 0.8rem; transition: all 0.3s;
-        }
-        .toggle-btn:hover { background: rgba(255,255,255,0.2); }
-
-        .main-container { 
-            display: flex; flex: 1; width: 100%; 
-            height: calc(100% - 50px - 60px); 
-            position: relative; overflow: hidden; 
-        }
-
-        aside { 
-            width: 25%; max-width: 300px; min-width: 200px;
-            background: linear-gradient(180deg, #1f2937, #111827);
-            display: flex; flex-direction: column; z-index: 95; 
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            overflow-y: auto; position: absolute; height: 100%; top: 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        }
-        .right-aside { right: 0; border-left: 2px solid var(--accent-gold); transform: translateX(100%); }
-        .right-aside.active { transform: translateX(0); }
-        .left-aside { left: 0; border-right: 2px solid var(--accent-gold); transform: translateX(-100%); }
-        .left-aside.active { transform: translateX(0); }
-        
-        .aside-header { 
-            padding: 16px; font-weight: bold; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); 
-            color: var(--accent-gold); font-size: 1rem;
-            text-align: center; letter-spacing: 1px;
-        }
-        .room-item, .nav-item { 
-            padding: 14px 16px; cursor: pointer; 
-            color: #e5e7eb; font-size: 0.9rem; 
-            border-bottom: 1px solid rgba(255,255,255,0.05); 
-            transition: all 0.3s; position: relative;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .room-item:hover, .nav-item:hover { 
-            background: rgba(217, 119, 6, 0.2); 
-            color: #fff;
-            padding-right: 20px;
-        }
-        .room-item.active { 
-            background: linear-gradient(90deg, rgba(217,119,6,0.3), transparent); 
-            color: var(--accent-gold);
+        .header-title {
+            color: #f0883e;
+            font-size: 16px;
             font-weight: bold;
         }
-        .room-item.active::before {
-            content: '';
-            position: absolute;
-            right: 0; top: 0; bottom: 0;
-            width: 3px;
-            background: var(--accent-gold);
-        }
-        .room-badge {
-            background: var(--accent-gold);
-            color: #fff;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            margin-right: auto;
-        }
-
-        .chat-area { 
-            flex: 1; width: 100%; display: flex; flex-direction: column; 
-            background: linear-gradient(rgba(10, 15, 30, 0.7), rgba(10, 15, 30, 0.8)), 
-                        url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop');
-            background-size: cover; background-position: center; 
-            position: relative; overflow: hidden; height: 100%; 
-        }
-
-        .voice-mics-bar {
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding: 10px;
+        /* منطقة الشات والرسائل */
+        .chat-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
             display: flex;
-            justify-content: space-around;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            background-color: #21262d;
+            padding: 10px 14px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-break: normal;
+            overflow-wrap: break-word;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .message .username {
+            color: #58a6ff;
+            font-weight: bold;
+            margin-bottom: 4px;
+            display: block;
+        }
+        /* تنسيق الصور والإيموجيات داخل الشات */
+        .message img, .emoji-box img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            vertical-align: middle;
+            margin: 2px;
+        }
+        /* شريط الإيموجيات والسفلية */
+        .emoji-bar {
+            display: flex;
+            gap: 8px;
+            padding: 8px 15px;
+            background-color: #161b22;
+            overflow-x: auto;
+            border-top: 1px solid #30363d;
+        }
+        .emoji-bar img {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .emoji-bar img:hover {
+            transform: scale(1.2);
+        }
+        /* صندوق الإرسال */
+        .footer-input {
+            display: flex;
+            padding: 10px 15px;
+            background-color: #161b22;
             gap: 10px;
-            flex-shrink: 0;
-            z-index: 3;
-            transition: all 0.3s;
+            align-items: center;
         }
-        .voice-mics-bar.hidden { display: none; }
-        .mic-toggle-btn {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff; padding: 4px 10px;
-            border-radius: 6px; cursor: pointer;
-            font-size: 0.75rem; transition: all 0.3s;
+        .footer-input input {
+            flex: 1;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
         }
-        .mic-toggle-btn:hover { background: rgba(255,255,255,0.2); }
-        .mic-slot {
-            width: 50px; height: 50px; border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.2);
-            cursor: pointer; transition: all 0.3s;
-            position: relative; display: flex;
-            align-items: center; justify-content: center;
+        .footer-input button {
+            background-color: #d1862d;
+            border: none;
+            border-radius: 20px;
+            color: #fff;
+            padding: 8px 18px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .mic-slot:hover { transform: scale(1.1); border-color: var(--accent-gold); }
-        .mic-slot.occupied {
-            background: linear-gradient(135deg, var(--accent-gold), #b45309);
-            border-color: var(--accent-gold);
-        }
-        .mic-slot.occupied .mic-user-avatar {
-            width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
-        }
-        .mic-slot.speaking {
-            box-shadow: 0 0 20px var(--accent-gold);
-            animation: pulse-mic 1.5s infinite;
-        }
-        .mic-slot.muted-by-user { opacity: 0.3; pointer-events: none; }
-        @keyframes pulse-mic {
-            0%, 100% { box-shadow: 0 0 20px var(--accent-gold); }
-            50% { box-shadow: 0 0 40px var(--accent-gold), 0 0 60px var(--accent-gold); }
-        }
-        .mic-icon { font-size: 1.5rem; color: #fff; }
-
-        .mics-toggle-arrow {
-            position: absolute; bottom: -15px; left: 50%;
-            transform: translateX(-50%); background: rgba(0,0,0,0.8);
-            border: 1px solid var(--accent-gold); color: var(--accent-gold);
-            width: 30px; height: 20px; border-radius: 0 0 15px 15px;
-            cursor: pointer; z-index: 5; display: flex;
-            align-items: center; justify-content: center; font-size: 0.7rem;
-            transition: all 0.3s;
-        }
-        .mics-toggle-arrow:hover { background: var(--accent-gold); color: #fff; }
-        .mics-toggle-arrow.hidden-arrow { bottom: auto; top: 0; border-radius: 15px 15px 0 0; }
-
-        .messages-container { 
-            flex: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; 
-            display: flex; flex-direction: column; gap: 16px; z-index: 2; width: 100%;
-        }
-        
-        .chat-message-row { 
-            display: flex; align-items: flex-start; gap: 10px; 
-            max-width: 100%; align-self: flex-start; z-index: 2; 
-            word-break: break-word; animation: slide-in 0.3s ease-out;
-        }
-        @keyframes slide-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .user-avatar { 
-            width: 42px; height: 42px; border-radius: 50%; 
-            object-fit: cover; border: 2px solid var(--accent-gold); 
-            flex-shrink: 0; cursor: pointer; transition: transform 0.3s;
-        }
-        .user-avatar:hover { transform: scale(1.2); }
-        .message-content-box { display: flex; flex-direction: column; gap: 4px; max-width: calc(100% - 52px); }
-        
-        .user-name-tag { 
-            font-size: 0.85rem; color: #fff; font-weight: bold; 
-            text-shadow: 0 1px 3px rgba(0,0,0,0.9); background: rgba(0,0,0,0.5); 
-            padding: 2px 10px; border-radius: 12px; display: inline-block; 
-            width: fit-content; cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px);
-        }
-        .user-name-tag:hover { background: var(--accent-gold); transform: scale(1.05); }
-        
-        .chat-message-group { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; max-width: 100%; }
-        
-        .chat-text-msg { 
-            background: transparent !important; border: none !important; box-shadow: none !important;
-            padding: 4px 8px; font-size: 1.2rem !important; color: #ffffff !important; 
-            word-break: break-all; overflow-wrap: break-word; white-space: pre-wrap;
-            text-align: right; direction: ltr; font-weight: bold;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.8); line-height: 1.5;
-        }
-        .chat-text-msg.arabic-text { direction: rtl; }
-        .bot-msg { color: #fde047 !important; text-shadow: 0 2px 5px rgba(0,0,0,0.95), 0 0 10px rgba(217,119,6,0.8); }
-        
-        .chat-animated-sticker { 
-            width: 72px !important; height: 72px !important; object-fit: contain; 
-            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.9)); flex-shrink: 0; vertical-align: middle; 
-        }
-
-        .chat-input-bar { 
-            flex-shrink: 0; width: 100%; padding: 12px; background: rgba(0,0,0,0.8); 
-            backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.1); 
-            display: flex; flex-direction: column; gap: 8px; z-index: 10; 
-        }
-        .selected-preview-bar { display: none; gap: 6px; padding: 4px; background: rgba(255,255,255,0.05); border-radius: 8px; overflow-x: auto; }
-        .selected-preview-bar.show { display: flex; }
-        .preview-item { position: relative; flex-shrink: 0; }
-        .preview-item img { width: 45px; height: 45px; object-fit: contain; }
-        .preview-item button { 
-            position: absolute; top: -4px; right: -4px; background: #ef4444; color: #fff; 
-            border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; cursor: pointer; 
-        }
-
-        .animated-emojis-popup { 
-            display: none; position: absolute; bottom: 70px; right: 10px; background: rgba(0,0,0,0.9); 
-            border: 1px solid var(--accent-gold); border-radius: 12px; padding: 12px; gap: 10px; z-index: 100; 
-            align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-        }
-        .animated-emojis-popup.show { display: flex; }
-        .animated-emoji-btn { 
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-            border-radius: 8px; padding: 6px; cursor: pointer; transition: all 0.3s;
-        }
-        .animated-emoji-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
-        .animated-emoji-btn img { width: 45px; height: 45px; object-fit: contain; }
-
-        .input-group { display: flex; gap: 8px; align-items: center; width: 100%; }
-        .plus-options-btn { 
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-            color: var(--accent-gold); width: 42px; height: 42px; border-radius: 10px; font-size: 1.5rem; cursor: pointer; transition: all 0.3s;
-        }
-        .plus-options-btn:hover { background: rgba(255,255,255,0.2); transform: rotate(90deg); }
-        .chat-input { 
-            flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); 
-            border-radius: 10px; padding: 12px; color: #fff; font-size: 0.95rem; outline: none; transition: all 0.3s;
-        }
-        .chat-input::placeholder { color: rgba(255,255,255,0.5); }
-        .chat-input:focus { border-color: var(--accent-gold); background: rgba(255,255,255,0.15); }
-        .send-btn { 
-            background: linear-gradient(135deg, var(--accent-gold), #b45309); border: none; border-radius: 10px; 
-            color: #fff; font-weight: bold; padding: 0 20px; height: 42px; cursor: pointer; transition: all 0.3s;
-        }
-        .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(217,119,6,0.5); }
-
-        .arabi-bottom-nav {
-            height: 60px; background: linear-gradient(135deg, #1f2937, #111827);
-            border-top: 2px solid var(--accent-gold); display: flex; justify-content: space-around; 
-            align-items: center; flex-shrink: 0; z-index: 100; width: 100%;
-        }
-        .nav-tab-btn {
-            background: none; border: none; color: #9ca3af; display: flex; flex-direction: column;
-            align-items: center; gap: 2px; cursor: pointer; font-size: 0.7rem; transition: all 0.3s; padding: 5px 10px;
-        }
-        .nav-tab-btn span.icon { font-size: 1.4rem; }
-        .nav-tab-btn:hover { color: #fff; transform: translateY(-2px); }
-        .nav-tab-btn.active { color: var(--accent-gold); font-weight: bold; }
-
-        .profile-modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; padding: 10px;
-        }
-        .profile-modal-overlay.show { display: flex; }
-        .profile-box {
-            width: 100%; max-width: 420px; max-height: 92vh; background: var(--profile-bg);
-            border-radius: 16px; overflow: hidden; display: flex; flex-direction: column;
-            border: 2px solid var(--accent-gold); box-shadow: 0 15px 35px rgba(0,0,0,0.5); position: relative;
-        }
-        .profile-cover {
-            height: 150px; background-size: cover; background-position: center; position: relative;
-            display: flex; justify-content: space-between; align-items: flex-start; padding: 15px;
-        }
-        .profile-cover::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
-        .p-top-actions { position: relative; z-index: 2; display: flex; gap: 8px; width: 100%; justify-content: space-between; align-items: center; }
-        .p-close-btn { 
-            background: rgba(0,0,0,0.6); border: none; color: #fff; width: 35px; height: 35px; border-radius: 50%; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.3s;
-        }
-        .p-close-btn:hover { background: var(--danger-red); }
-        
-        .profile-avatar-area {
-            position: absolute; right: 25px; top: 55px; width: 80px; height: 80px;
-            border-radius: 50%; border: 3px solid var(--accent-gold); overflow: hidden; z-index: 3; background: #fff;
-        }
-        .profile-avatar-area img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .profile-user-details { position: relative; z-index: 2; margin-top: auto; padding: 0 15px 10px 15px; width: 100%; }
-        .p-rank-title { font-size: 0.8rem; color: #fde047; font-weight: bold; margin-bottom: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .p-username-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .p-username { 
-            font-size: 1.1rem; font-weight: bold; color: var(--profile-name-color); 
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8); padding: 4px 10px; background: var(--profile-name-bg); border-radius: 8px;
-        }
-        .p-bio { font-size: 0.8rem; color: #f3f4f6; margin-top: 4px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .p-edit-btn-inline { 
-            background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 5px 12px; 
-            border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s;
-        }
-        .p-edit-btn-inline:hover { background: rgba(255,255,255,0.3); }
-
-        .profile-tabs-header { display: flex; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.1); overflow-x: auto; flex-shrink: 0; }
-        .p-tab-btn { 
-            padding: 12px 18px; background: none; border: none; color: #9ca3af; font-size: 0.85rem; 
-            cursor: pointer; white-space: nowrap; font-weight: bold; flex: 1; text-align: center; transition: all 0.3s;
-        }
-        .p-tab-btn.active { color: var(--accent-gold); border-bottom: 3px solid var(--accent-gold); background: rgba(217, 119, 6, 0.1); }
-
-        .profile-tab-body { flex: 1; overflow-y: auto; padding: 20px; background: rgba(0,0,0,0.2); display: none; }
-        .profile-tab-body.active { display: block; }
-        
-        .p-info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
-        .p-info-label { color: #9ca3af; }
-        .p-info-val { color: #fff; font-weight: bold; }
-
-        .profile-actions-row { display: flex; gap: 8px; padding: 15px; flex-wrap: wrap; justify-content: center; border-top: 1px solid rgba(255,255,255,0.1); }
-        .profile-action-btn { 
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; 
-            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: all 0.3s; 
-        }
-        .profile-action-btn:hover { background: rgba(255,255,255,0.2); }
-        .profile-action-btn.friended { background: var(--success-green); border-color: var(--success-green); }
-        .profile-action-btn.liked { background: var(--accent-pink); border-color: var(--accent-pink); }
-        .profile-action-btn.ignored { background: var(--danger-red); border-color: var(--danger-red); }
-        .profile-action-btn.playing { background: var(--accent-gold); border-color: var(--accent-gold); }
-
-        .daily-status-section { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 10px; }
-        .status-type-buttons { display: flex; gap: 5px; }
-        .status-type-btn { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #9ca3af; padding: 6px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }
-        .status-type-btn.active { background: var(--accent-gold); color: #fff; font-weight: bold; }
-        .daily-status-input { width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px; color: #fff; font-size: 0.85rem; outline: none; }
-        .status-file-input { display: none; }
-        .status-media-preview { display: none; width: 100%; max-height: 120px; border-radius: 8px; overflow: hidden; background: #000; text-align: center; }
-        .status-media-preview img, .status-media-preview video { width: 100%; max-height: 120px; object-fit: contain; }
-
-        .music-player-section { padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 8px; justify-content: center; }
-        .music-control-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; }
-        .music-control-btn:hover { background: rgba(255,255,255,0.2); }
-
-        .bot-memory-section { padding: 10px 15px; border-top: 1px solid rgba(255,255,255,0.1); max-height: 150px; overflow-y: auto; }
-        .bot-memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 6px; margin-bottom: 5px; font-size: 0.75rem; color: #fff; }
-        .bot-memory-delete-btn { background: var(--danger-red); border: none; color: #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
-
-        .color-picker-row { display: flex; gap: 8px; padding: 5px 0; }
-        .color-option { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
-        .color-option:hover { transform: scale(1.1); }
-        .color-option.selected { border-color: #fff; transform: scale(1.15); }
-        .name-gif-options { display: flex; gap: 8px; padding: 5px 0; }
-        .name-gif-option { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; object-fit: cover; }
-        .name-gif-option.selected { border-color: var(--accent-gold); }
-
-        .preview-profile-btn, .save-profile-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.85rem; }
-        .preview-profile-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-        .save-profile-btn { background: linear-gradient(135deg, var(--accent-gold), #b45309); color: #fff; }
-
-        .confirm-dialog-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
-        .confirm-dialog-overlay.show { display: flex; }
-        .confirm-dialog { background: #1f2937; border: 2px solid var(--accent-gold); border-radius: 12px; padding: 20px; width: 90%; max-width: 320px; text-align: center; color: #fff; }
-        .confirm-dialog h3 { color: var(--accent-gold); margin-bottom: 10px; font-size: 1.1rem; }
-        .confirm-dialog p { font-size: 0.9rem; margin-bottom: 20px; color: #d1d5db; }
-        .confirm-dialog-btns { display: flex; gap: 10px; justify-content: center; }
-        .confirm-yes-btn, .confirm-no-btn { padding: 8px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .confirm-yes-btn { background: var(--accent-gold); color: #fff; }
-        .confirm-no-btn { background: rgba(255,255,255,0.1); color: #fff; }
     </style>
 </head>
 <body>
 
-<header>
-    <button class="toggle-btn" onclick="toggleSidebar(event, 'right')">📂 الرومات</button>
-    <div class="header-title" id="headerTitle">قمر الشام - الروم العام</div>
-    <button class="toggle-btn" onclick="toggleSidebar(event, 'left')">👑 الرتب</button>
-</header>
+    <div class="header">
+        <div class="header-title">👑 قمر الشام - ديوان الحكم</div>
+    </div>
 
-<main class="main-container" id="mainContainer">
-    <aside class="right-aside" id="rightAside" onclick="event.stopPropagation()">
-        <div class="aside-header">🏰 الرومات والأقسام</div>
-        <div class="room-item active" onclick="switchRoom('عام', this)">📌 الروم العام <span class="room-badge">150</span></div>
-        <div class="room-item" onclick="switchRoom('ديوان الحكم', this)">👑 ديوان الحكم <span class="room-badge">25</span></div>
-        <div class="room-item" onclick="switchRoom('ليالي الشعر', this)">📜 ليالي الشعر <span class="room-badge">45</span></div>
-        <div class="room-item" onclick="switchRoom('خاص', this)">🔒 الخاص مع البوت</div>
-    </aside>
-
-    <section class="chat-area" id="chatArea">
-        <div style="position: relative;">
-            <div class="voice-mics-bar" id="voiceMicsBar">
-                <div class="mic-slot" onclick="requestMicToggle(0)" id="micSlot0"><span class="mic-icon">🎤</span></div>
-                <div class="mic-slot" onclick="requestMicToggle(1)" id="micSlot1"><span class="mic-icon">🎤</span></div>
-                <div class="mic-slot" onclick="requestMicToggle(2)" id="micSlot2"><span class="mic-icon">🎤</span></div>
-                <div class="mic-slot" onclick="requestMicToggle(3)" id="micSlot3"><span class="mic-icon">🎤</span></div>
-                <button class="mic-toggle-btn" onclick="toggleMuteAllMics()">🔇 كتم</button>
-            </div>
-            <button class="mics-toggle-arrow" id="micsArrow" onclick="toggleMicsBar()">▼</button>
+    <div class="chat-container" id="chatContainer">
+        <div class="message">
+            <span class="username">بوت قمر الشام 🤖</span>
+            مرحباً بك يا ملك عماد تحت ياسمين قمر الشام ✨
         </div>
-
-        <div class="messages-container" id="messagesContainer"></div>
-
-        <div class="chat-input-bar" onclick="event.stopPropagation()">
-            <div class="selected-preview-bar" id="previewBar"></div>
-            <div class="animated-emojis-popup" id="emojisPopup">
-                <button class="animated-emoji-btn" onclick="addStickerToPreview('17.gif')"><img src="17.gif" alt="st"></button>
-                <button class="animated-emoji-btn" onclick="addStickerToPreview('Xz28.gif')"><img src="Xz28.gif" alt="st"></button>
-                <button class="animated-emoji-btn" onclick="addStickerToPreview('a32.gif')"><img src="a32.gif" alt="st"></button>
-                <button class="animated-emoji-btn" onclick="addStickerToPreview('1.gif')"><img src="1.gif" alt="st"></button>
-            </div>
-
-            <div class="input-group">
-                <button class="plus-options-btn" onclick="toggleEmojisPopup(event)">+</button>
-                <input type="text" id="messageInput" class="chat-input" placeholder="اكتب رسالتك..." onkeypress="checkEnter(event)" />
-                <button class="send-btn" onclick="sendMessage()">إرسال</button>
-            </div>
-        </div>
-    </section>
-
-    <aside class="left-aside" id="leftAside" onclick="event.stopPropagation()">
-        <div class="aside-header">👑 هرمية الرتب</div>
-        <div class="nav-item">👑 الملك (عماد)</div>
-        <div class="nav-item" style="color:var(--accent-pink)">💖 الملكة الحصرية (آيلا)</div>
-        <div class="nav-item">⭐ سوبر أدمن (3)</div>
-        <div class="nav-item">🛡️ أدمن (5)</div>
-        <div class="nav-item">🎖️ مشرف (8)</div>
-        <div class="nav-item">✨ VIP (15)</div>
-        <div class="nav-item">👤 عضو (50)</div>
-    </aside>
-</main>
-
-<nav class="arabi-bottom-nav" onclick="event.stopPropagation()">
-    <button class="nav-tab-btn" onclick="bottomNavAction('options')"><span class="icon">⚙️</span><span>خيارات</span></button>
-    <button class="nav-tab-btn" onclick="bottomNavAction('online')"><span class="icon">👥</span><span>المتصلين</span></button>
-    <button class="nav-tab-btn active" onclick="bottomNavAction('home')"><span class="icon">🏠</span><span>الرئيسية</span></button>
-    <button class="nav-tab-btn" onclick="bottomNavAction('friends')"><span class="icon">➕</span><span>الأصدقاء</span></button>
-</nav>
-
-<div class="confirm-dialog-overlay" id="confirmDialog" onclick="closeConfirmDialog()">
-    <div class="confirm-dialog" onclick="event.stopPropagation()">
-        <h3 id="confirmTitle">تأكيد</h3>
-        <p id="confirmMessage">هل أنت متأكد؟</p>
-        <div class="confirm-dialog-btns">
-            <button class="confirm-yes-btn" onclick="confirmAction()">نعم</button>
-            <button class="confirm-no-btn" onclick="closeConfirmDialog()">إلغاء</button>
+        <div class="message">
+            <span class="username">عماد</span>
+            أهلاً بالجميع، الروم العام جاهز والميكات شغالة! <img src="10s.gif" alt="emoji"> <img src="11.gif" alt="emoji"> <img src="20.gif" alt="emoji">
         </div>
     </div>
-</div>
 
-<div class="profile-modal-overlay" id="profileModal" onclick="closeProfileModal()">
-    <div class="profile-box" onclick="event.stopPropagation()">
-        <div class="profile-cover" id="modalCoverArea" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop');">
-            <div class="p-top-actions">
-                <button class="p-close-btn" onclick="closeProfileModal()" title="إغلاق">✕</button>
-                <button class="p-edit-btn-inline" onclick="document.getElementById('coverFileInput').click()">🖼️ غلاف</button>
-            </div>
-            <div class="profile-avatar-area" onclick="document.getElementById('avatarFileInput').click()">
-                <img src="1.gif" alt="Avatar" id="pModalAvatar">
-            </div>
-            <div class="profile-user-details">
-                <div class="p-rank-title" id="pModalRank">Super Admin ⭐</div>
-                <div class="p-username-row">
-                    <div class="p-username" id="pModalName">عماد ♠</div>
-                    <button class="p-edit-btn-inline" onclick="changeNamePrompt()">✏️</button>
-                </div>
-                <div class="p-bio" id="pModalBio">متمرّد بطبعي ♠</div>
-            </div>
-        </div>
-        <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" onchange="previewAvatarImage(event)">
-        <input type="file" id="coverFileInput" accept="image/*" style="display: none;" onchange="previewCoverImage(event)">
-        
-        <div class="profile-actions-row" id="profileActionsRow" style="display: none;">
-            <button class="profile-action-btn" id="friendBtn" onclick="toggleFriend()">➕ إضافة صديق</button>
-            <button class="profile-action-btn" id="likeBtn" onclick="toggleLike()">💖 إعجاب</button>
-            <button class="profile-action-btn" onclick="sendPrivateMessage()">💬 رسالة خاصة</button>
-            <button class="profile-action-btn" id="ignoreBtn" onclick="toggleIgnore()">🚫 تجاهل</button>
-        </div>
-
-        <div class="daily-status-section">
-            <div class="status-type-buttons">
-                <button class="status-type-btn active" onclick="setStatusType('text', this)">📝 كتابة</button>
-                <button class="status-type-btn" onclick="setStatusType('image', this)">🖼️ صورة</button>
-                <button class="status-type-btn" onclick="setStatusType('video', this)">🎬 فيديو</button>
-            </div>
-            <input type="text" class="daily-status-input" id="dailyStatusInput" placeholder="أضف حالة يومية..." onkeypress="if(event.key==='Enter') addDailyStatus()">
-            <input type="file" class="status-file-input" id="statusFileInput" accept="image/*,video/*" onchange="previewStatusFile(event)">
-            <div class="status-media-preview" id="statusMediaPreview"></div>
-            <button class="profile-action-btn" onclick="addDailyStatus()" style="width:100%; text-align:center; background:var(--accent-gold);">📝 إضافة حالة</button>
-        </div>
-
-        <div class="music-player-section">
-            <button class="music-control-btn" id="musicBtn" onclick="toggleMusic()">🎵 تشغيل موسيقى</button>
-            <button class="music-control-btn" onclick="changeMusicTrack()">🎶 تغيير</button>
-            <button class="music-control-btn" onclick="stopMusic()">⏹️ إيقاف</button>
-        </div>
-
-        <div class="bot-memory-section" id="botMemorySection" style="display: none;">
-            <div class="aside-header" style="font-size: 0.8rem; padding: 4px 8px; text-align: right;">🤖 ذاكرة البوت</div>
-            <div id="botMemoryList"></div>
-        </div>
-
-        <div class="profile-tabs-header">
-            <button class="p-tab-btn active" onclick="switchProfileTab('account', this)">حساب</button>
-            <button class="p-tab-btn" onclick="switchProfileTab('appearance', this)">المظهر</button>
-            <button class="p-tab-btn" onclick="switchProfileTab('stats', this)">إحصائيات</button>
-        </div>
-        
-        <div class="profile-tab-body active" id="tab-account">
-            <div class="p-info-row"><span class="p-info-label">الصورة الشخصية</span><button class="p-edit-btn-inline" style="background:var(--accent-gold);" onclick="document.getElementById('avatarFileInput').click()">اختر</button></div>
-            <div class="p-info-row"><span class="p-info-label">البلد</span><span class="p-info-val">سوريا - دمشق</span></div>
-            <div class="p-info-row"><span class="p-info-label">الحالة</span><span class="p-info-val">متصل 🟢</span></div>
-            <button class="preview-profile-btn" onclick="previewProfile()">👁️ معاينة البروفايل</button>
-            <button class="save-profile-btn" onclick="saveProfileChanges()">💾 حفظ التغييرات</button>
-        </div>
-        
-        <div class="profile-tab-body" id="tab-appearance">
-            <div class="p-info-row"><span class="p-info-label">لون خلفية البروفايل</span></div>
-            <div class="color-picker-row" id="profileBgColors">
-                <div class="color-option" style="background:#1f2937;" onclick="changeProfileBg('#1f2937', this)"></div>
-                <div class="color-option" style="background:#111827;" onclick="changeProfileBg('#111827', this)"></div>
-                <div class="color-option" style="background:#312e81;" onclick="changeProfileBg('#312e81', this)"></div>
-                <div class="color-option" style="background:#831843;" onclick="changeProfileBg('#831843', this)"></div>
-                <div class="color-option" style="background:#064e3b;" onclick="changeProfileBg('#064e3b', this)"></div>
-            </div>
-            <div class="p-info-row"><span class="p-info-label">لون الاسم</span></div>
-            <div class="color-picker-row" id="nameColors">
-                <div class="color-option" style="background:#ffffff;" onclick="changeNameColor('#ffffff', this)"></div>
-                <div class="color-option" style="background:#fde047;" onclick="changeNameColor('#fde047', this)"></div>
-                <div class="color-option" style="background:#ec4899;" onclick="changeNameColor('#ec4899', this)"></div>
-                <div class="color-option" style="background:#8b5cf6;" onclick="changeNameColor('#8b5cf6', this)"></div>
-                <div class="color-option" style="background:#10b981;" onclick="changeNameColor('#10b981', this)"></div>
-            </div>
-            <div class="p-info-row"><span class="p-info-label">خلفية الاسم</span></div>
-            <div class="color-picker-row" id="nameBgColors">
-                <div class="color-option" style="background:rgba(0,0,0,0.5);" onclick="changeNameBg('rgba(0,0,0,0.5)', this)"></div>
-                <div class="color-option" style="background:rgba(217,119,6,0.5);" onclick="changeNameBg('rgba(217,119,6,0.5)', this)"></div>
-                <div class="color-option" style="background:rgba(236,72,153,0.5);" onclick="changeNameBg('rgba(236,72,153,0.5)', this)"></div>
-                <div class="color-option" style="background:rgba(139,92,246,0.5);" onclick="changeNameBg('rgba(139,92,246,0.5)', this)"></div>
-                <div class="color-option" style="background:rgba(16,185,129,0.5);" onclick="changeNameBg('rgba(16,185,129,0.5)', this)"></div>
-            </div>
-            <div class="p-info-row"><span class="p-info-label">GIF للاسم</span></div>
-            <div class="name-gif-options" id="nameGifOptions">
-                <img src="1.gif" class="name-gif-option" onclick="addNameGif('1.gif', this)" alt="gif1">
-                <img src="17.gif" class="name-gif-option" onclick="addNameGif('17.gif', this)" alt="gif2">
-                <img src="a32.gif" class="name-gif-option" onclick="addNameGif('a32.gif', this)" alt="gif3">
-                <img src="Xz28.gif" class="name-gif-option" onclick="addNameGif('Xz28.gif', this)" alt="gif4">
-            </div>
-            <button class="preview-profile-btn" onclick="previewProfile()">👁️ معاينة</button>
-            <button class="save-profile-btn" onclick="saveProfileChanges()">💾 حفظ التغييرات</button>
-        </div>
-        
-        <div class="profile-tab-body" id="tab-stats">
-            <div class="p-info-row"><span class="p-info-label">الرسائل</span><span class="p-info-val">1,250</span></div>
-            <div class="p-info-row"><span class="p-info-label">ساعات التواجد</span><span class="p-info-val">350 ساعة</span></div>
-            <div class="p-info-row"><span class="p-info-label">الأصدقاء</span><span class="p-info-val">45 صديق</span></div>
-            <div class="p-info-row"><span class="p-info-label">المستوى</span><span class="p-info-val">25 ⭐</span></div>
-        </div>
+    <div class="emoji-bar">
+        <img src="10s.gif" alt="emoji">
+        <img src="11.gif" alt="emoji">
+        <img src="20.gif" alt="emoji">
+        <img src="3962.gif" alt="emoji">
+        <img src="5.gif" alt="emoji">
+        <img src="a21.gif" alt="emoji">
+        <img src="a22.gif" alt="emoji">
+        <img src="a25.gif" alt="emoji">
+        <img src="a26.gif" alt="emoji">
+        <img src="a27.gif" alt="emoji">
+        <img src="a28.gif" alt="emoji">
     </div>
-</div>
 
-<script>
-    // ============ البيانات الأساسية ============
-    let currentUser = { 
-        name: "عماد", 
-        bio: "متمرّد بطبعي ♠", 
-        avatar: "1.gif", 
-        cover: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop",
-        rank: "Super Admin ⭐",
-        nameGif: null
-    };
+    <div class="footer-input">
+        <input type="text" id="messageInput" placeholder="اكتب رسالتك...">
+        <button onclick="sendMessage()">إرسال</button>
+    </div>
 
-    let tempAvatar = currentUser.avatar;
-    let tempCover = currentUser.cover;
-    let currentRoom = "عام";
-    let activeMics = [false, false, false, false];
-    let micsMuted = false;
-    let isFriend = false;
-    let isLiked = false;
-    let isIgnored = false;
-    let currentMusicTrack = 0;
-    let musicPlaying = false;
-    let pendingMicAction = null;
-    let currentStatusType = 'text';
-    let tempStatusFile = null;
-
-    const musicTracks = [
-        { name: "موال شامي" },
-        { name: "قدود حلبية" },
-        { name: "طقطوقة" }
-    ];
-
-    const onlineUsers = [
-        { name: "عماد", avatar: "1.gif", rank: "الملك 👑" },
-        { name: "آيلا", avatar: "1.gif", rank: "الملكة 💖" },
-        { name: "سامر", avatar: "17.gif", rank: "VIP ✨" },
-        { name: "لينا", avatar: "a32.gif", rank: "مشرفة 🎖️" }
-    ];
-
-    let botMemory = JSON.parse(localStorage.getItem('bot_custom_memory')) || {
-        "مين آيلا": "الملكة آيلا هي جوهرة الفضاء وسلطانة القلوب المحترمة 👑💖",
-        "بتحب آيلا": "بعشقها للغاليين ع قلبي الملكة آيلا طبعاً! 🥰🌺",
-        "ارقص": "غصب عني برقص 💃💃",
-        "شلونك": "تمام ومشتاق لأهلي بالشام 🌙✨"
-    };
-
-    // ============ تهيئة التطبيق ============
-    window.addEventListener('DOMContentLoaded', () => {
-        loadSavedData();
-        appendMessage("🤖 بوت قمر الشام", "17.gif", "أهلاً بك يا ملك عماد تحت ياسمين قمر الشام ✨\nالروم العام جاهز، والميكات شغالة!", true);
-        setTimeout(() => {
-            occupyMic(0, onlineUsers[2]);
-            occupyMic(1, onlineUsers[3]);
-        }, 1000);
-    });
-
-    // ============ نظام المايكات ============
-    function requestMicToggle(index) {
-        const isJoining = !activeMics[index];
-        pendingMicAction = { index, isJoining };
-        document.getElementById('confirmTitle').textContent = isJoining ? '🎤 تأكيد الانضمام' : '🎤 تأكيد الخروج';
-        document.getElementById('confirmMessage').textContent = isJoining ? 'هل تريد الانضمام إلى المايك؟' : 'هل تريد الخروج من المايك؟';
-        document.getElementById('confirmDialog').classList.add('show');
-    }
-
-    function confirmAction() {
-        if (pendingMicAction) {
-            const { index, isJoining } = pendingMicAction;
-            if (isJoining) { joinMic(index); } else { leaveMic(index); }
-            pendingMicAction = null;
-        }
-        closeConfirmDialog();
-    }
-
-    function closeConfirmDialog() {
-        document.getElementById('confirmDialog').classList.remove('show');
-        pendingMicAction = null;
-    }
-
-    function joinMic(index) {
-        const micSlot = document.getElementById(`micSlot${index}`);
-        activeMics[index] = true;
-        micSlot.classList.add('occupied', 'speaking');
-        micSlot.innerHTML = `<img src="${currentUser.avatar}" class="mic-user-avatar" alt="${currentUser.name}">`;
-        appendMessage("🔊 نظام الصوت", "17.gif", `${currentUser.name} انضم للمايك رقم ${index + 1} 🎤`, true);
-        setTimeout(() => { micSlot.classList.remove('speaking'); }, 3000);
-    }
-
-    function leaveMic(index) {
-        const micSlot = document.getElementById(`micSlot${index}`);
-        activeMics[index] = false;
-        micSlot.classList.remove('occupied', 'speaking');
-        micSlot.innerHTML = '<span class="mic-icon">🎤</span>';
-        appendMessage("🔊 نظام الصوت", "17.gif", `${currentUser.name} غادر المايك رقم ${index + 1}`, true);
-    }
-
-    function occupyMic(index, user) {
-        const micSlot = document.getElementById(`micSlot${index}`);
-        activeMics[index] = true;
-        micSlot.classList.add('occupied');
-        micSlot.innerHTML = `<img src="${user.avatar}" class="mic-user-avatar" alt="${user.name}">`;
-    }
-
-    function toggleMicsBar() {
-        const bar = document.getElementById('voiceMicsBar');
-        const arrow = document.getElementById('micsArrow');
-        bar.classList.toggle('hidden');
-        if (bar.classList.contains('hidden')) {
-            arrow.textContent = '▲';
-            arrow.classList.add('hidden-arrow');
-        } else {
-            arrow.textContent = '▼';
-            arrow.classList.remove('hidden-arrow');
-        }
-    }
-
-    function toggleMuteAllMics() {
-        micsMuted = !micsMuted;
-        document.querySelectorAll('.mic-slot').forEach(slot => {
-            if (micsMuted) { slot.classList.add('muted-by-user'); } 
-            else { slot.classList.remove('muted-by-user'); }
-        });
-        appendMessage("🔊 نظام الصوت", "17.gif", micsMuted ? "تم كتم جميع المايكات" : "تم إلغاء كتم المايكات", true);
-    }
-
-    // ============ نظام المراسلة ============
-    function appendMessage(senderName, senderAvatar, textContent, isBot = false, stickers = []) {
-        const container = document.getElementById('messagesContainer');
-        const row = document.createElement('div'); 
-        row.className = 'chat-message-row';
-        const avatar = document.createElement('img'); 
-        avatar.src = senderAvatar; 
-        avatar.className = 'user-avatar';
-        avatar.onclick = () => showUserProfile(senderName, senderAvatar, senderName === currentUser.name);
-        row.appendChild(avatar);
-        const contentBox = document.createElement('div'); 
-        contentBox.className = 'message-content-box';
-        const nameTag = document.createElement('div'); 
-        nameTag.className = 'user-name-tag'; 
-        nameTag.textContent = senderName;
-        nameTag.onclick = () => {
+    <script>
+        function sendMessage() {
             const input = document.getElementById('messageInput');
-            input.value = `@${senderName} ` + input.value;
-            input.focus();
-        };
-        contentBox.appendChild(nameTag);
-        const group = document.createElement('div'); 
-        group.className = 'chat-message-group';
-        if (textContent) {
-            const textMsg = document.createElement('div'); 
-            const isArabic = /[\u0600-\u06FF]/.test(textContent);
-            textMsg.className = 'chat-text-msg ' + (isBot ? 'bot-msg ' : '') + (isArabic ? 'arabic-text' : '');
-            textMsg.textContent = textContent; 
-            group.appendChild(textMsg);
-        }
-        stickers.forEach(s => {
-            const img = document.createElement('img'); 
-            img.src = s; 
-            img.className = 'chat-animated-sticker'; 
-            group.appendChild(img);
-        });
-        contentBox.appendChild(group);
-        row.appendChild(contentBox);
-        container.appendChild(row);
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function sendMessage() {
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-        const selectedStickers = getSelectedStickers();
-        if (!message && selectedStickers.length === 0) return;
-        
-        appendMessage(currentUser.name, currentUser.avatar, message, false, selectedStickers);
-        
-        if (message) {
-            // روم التدريب الخاص
-            if (currentRoom === 'خاص') {
-                if (message.includes("بوت تعلم") || message.includes("البوت تعلم") || message.includes("بووت تعلم") || message.includes("البووت تعلم")) { 
-                    handleBotLearning(message); 
-                } else {
-                    const botReply = findExactAnswer(message);
-                    if (botReply) {
-                        setTimeout(() => { appendMessage("🤖 بوت قمر الشام", "17.gif", botReply, true); }, 800);
-                    }
-                    // صمت تام إذا لم يفهم الكلمة
-                }
-            } 
-            // الروم العام أو الرومات الأخرى (قاعدة صارمة جداً: البوت لا يرد إلا إذا نُودي عليه بكلمة "بوت" وكان ما تبقى مطابقاً تماماً للذاكرة)
-            else {
-                const cleanText = message.toLowerCase();
-                // التحقق إذا بدأ بكلمة بوت
-                if (cleanText.startsWith("بوت ") || cleanText.startsWith("يابوت ") || cleanText.startsWith("يا بوت ") || cleanText === "بوت") {
-                    let query = cleanText.replace(/^(بوت|يابوت|يا بوت)\s*/, "").trim();
-                    if (query) {
-                        const botReply = findExactAnswer(query);
-                        if (botReply) {
-                            setTimeout(() => { appendMessage("🤖 بوت قمر الشام", "17.gif", botReply, true); }, 800);
-                        }
-                    }
-                }
-                // إذا لم يبدأ بـ "بوت" أو لم تكن الكلمة مطابقة بدقة في الذاكرة، البوت يصمت كلياً وكأنه غير موجود
+            const container = document.getElementById('chatContainer');
+            if(input.value.trim() !== "") {
+                const div = document.createElement('div');
+                div.className = 'message';
+                div.innerHTML = `<span class="username">عماد</span> ${input.value}`;
+                container.appendChild(div);
+                input.value = "";
+                container.scrollTop = container.scrollHeight;
             }
         }
-        input.value = '';
-        clearPreviewBar();
-    }
-
-    function checkEnter(event) {
-        if (event.key === 'Enter') { sendMessage(); }
-    }
-
-    function findExactAnswer(msg) {
-        const text = msg.toLowerCase().trim();
-        // مطابقة تامة أو شبه تامة مع مفاتيح الذاكرة بدون تخبط
-        for (let key in botMemory) {
-            if (text === key.toLowerCase() || text.includes(key.toLowerCase())) {
-                return botMemory[key];
-            }
-        }
-        return null; // صمت تام
-    }
-
-    function handleBotLearning(message) {
-        let cleanMsg = message;
-        const patterns = ["بوت تعلم", "البوت تعلم", "بووت تعلم", "البووت تعلم"];
-        for (let pattern of patterns) {
-            cleanMsg = cleanMsg.replace(pattern, "").trim();
-        }
-        cleanMsg = cleanMsg.replace(/^[:,\s]+/, "");
-        
-        const parts = cleanMsg.split("=");
-        if (parts.length === 2) {
-            const question = parts[0].trim();
-            const answer = parts[1].trim();
-            if (question && answer) {
-                botMemory[question] = answer;
-                localStorage.setItem('bot_custom_memory', JSON.stringify(botMemory));
-                appendMessage("🤖 بوت قمر الشام", "17.gif", `✅ تم الحفظ فعلياً!\nالسؤال: "${question}"\nالجواب: "${answer}"\n\nجرب الآن: بوت ${question}`, true);
-                updateBotMemoryUI();
-            } else {
-                appendMessage("🤖 بوت قمر الشام", "17.gif", "❌ خطأ! اكتب بالشكل:\nبوت تعلم: السؤال = الجواب", true);
-            }
-        } else {
-            appendMessage("🤖 بوت قمر الشام", "17.gif", "❌ خطأ! اكتب بالشكل:\nبوت تعلم: السؤال = الجواب\nمثال: بوت تعلم: شلونك = تمام", true);
-        }
-    }
-
-    // ============ ذاكرة البوت UI ============
-    function updateBotMemoryUI() {
-        const memorySection = document.getElementById('botMemorySection');
-        const memoryList = document.getElementById('botMemoryList');
-        
-        if (currentRoom === 'خاص') {
-            memorySection.style.display = 'block';
-            memoryList.innerHTML = '';
-            
-            for (let key in botMemory) {
-                const item = document.createElement('div');
-                item.className = 'bot-memory-item';
-                item.innerHTML = `
-                    <span>${key} = ${botMemory[key]}</span>
-                    <button class="bot-memory-delete-btn" onclick="deleteBotMemory('${key}')">حذف</button>
-                `;
-                memoryList.appendChild(item);
-            }
-        } else {
-            memorySection.style.display = 'none';
-        }
-    }
-
-    function deleteBotMemory(key) {
-        delete botMemory[key];
-        localStorage.setItem('bot_custom_memory', JSON.stringify(botMemory));
-        updateBotMemoryUI();
-        appendMessage("🤖 بوت قمر الشام", "17.gif", `تم حذف: "${key}" من ذاكرتي`, true);
-    }
-
-    // ============ الملصقات ============
-    let selectedStickers = [];
-    function toggleEmojisPopup(event) {
-        event.stopPropagation();
-        document.getElementById('emojisPopup').classList.toggle('show');
-    }
-    function addStickerToPreview(stickerSrc) {
-        selectedStickers.push(stickerSrc);
-        updatePreviewBar();
-    }
-    function updatePreviewBar() {
-        const previewBar = document.getElementById('previewBar');
-        previewBar.innerHTML = '';
-        if (selectedStickers.length > 0) {
-            previewBar.classList.add('show');
-            selectedStickers.forEach((sticker, index) => {
-                const previewItem = document.createElement('div');
-                previewItem.className = 'preview-item';
-                const img = document.createElement('img');
-                img.src = sticker;
-                const removeBtn = document.createElement('button');
-                removeBtn.textContent = '×';
-                removeBtn.onclick = () => { selectedStickers.splice(index, 1); updatePreviewBar(); };
-                previewItem.appendChild(img);
-                previewItem.appendChild(removeBtn);
-                previewBar.appendChild(previewItem);
-            });
-        } else { previewBar.classList.remove('show'); }
-    }
-    function getSelectedStickers() { return [...selectedStickers]; }
-    function clearPreviewBar() {
-        selectedStickers = [];
-        updatePreviewBar();
-        document.getElementById('emojisPopup').classList.remove('show');
-    }
-
-    // ============ الرومات ============
-    function switchRoom(roomName, element) {
-        currentRoom = roomName;
-        document.getElementById('headerTitle').textContent = `قمر الشام - ${roomName}`;
-        document.querySelectorAll('.room-item').forEach(item => item.classList.remove('active'));
-        if (element) element.classList.add('active');
-        document.getElementById('messagesContainer').innerHTML = '';
-        const welcomeMessages = {
-            'عام': 'أهلاً بك في الروم العام! 🌟\n(ملاحظة: البوت هنا يصمت تماماً ولا يرد إلا إذا كتبتم "بوت [السؤال المحفوظ]")',
-            'ديوان الحكم': 'مرحباً بك في ديوان الحكم 👑',
-            'ليالي الشعر': 'أهلاً بك في ليالي الشعر 📜',
-            'خاص': 'هذا روم خاص للتدريب مع البوت 🤖\nمثال: بوت تعلم: شلونك = تمام\n\nلعرض الذاكرة اضغط على أيقونة ⚙️ الخيارات'
-        };
-        appendMessage("🤖 بوت قمر الشام", "17.gif", welcomeMessages[roomName] || `أهلاً بك في روم ${roomName}`, true);
-        document.getElementById('rightAside').classList.remove('active');
-        updateBotMemoryUI();
-    }
-
-    // ============ القوائم ============
-    function toggleSidebar(event, side) {
-        event.stopPropagation();
-        const right = document.getElementById('rightAside');
-        const left = document.getElementById('leftAside');
-        if (side === 'right') { right.classList.toggle('active'); left.classList.remove('active'); } 
-        else { left.classList.toggle('active'); right.classList.remove('active'); }
-        document.getElementById('emojisPopup').classList.remove('show');
-    }
-    function closeAllPopups() {
-        document.getElementById('rightAside').classList.remove('active');
-        document.getElementById('leftAside').classList.remove('active');
-        document.getElementById('emojisPopup').classList.remove('show');
-    }
-
-    // ============ البروفايل ============
-    function showUserProfile(name, avatar, isCurrentUser = false) {
-        document.getElementById('pModalName').textContent = name;
-        document.getElementById('pModalAvatar').src = avatar;
-        
-        const actionsRow = document.getElementById('profileActionsRow');
-        if (isCurrentUser || name === currentUser.name) {
-            actionsRow.style.display = 'none';
-        } else {
-            actionsRow.style.display = 'flex';
-        }
-        
-        document.getElementById('profileModal').classList.add('show');
-        updateBotMemoryUI();
-    }
-    function closeProfileModal() {
-        document.getElementById('profileModal').classList.remove('show');
-    }
-    function changeNamePrompt() {
-        const newName = prompt("أدخل الاسم الجديد:", currentUser.name);
-        if (newName && newName.trim()) {
-            currentUser.name = newName.trim();
-            document.getElementById('pModalName').textContent = currentUser.name;
-        }
-    }
-    function previewAvatarImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                tempAvatar = e.target.result;
-                document.getElementById('pModalAvatar').src = tempAvatar;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    function previewCoverImage(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                tempCover = e.target.result;
-                document.getElementById('modalCoverArea').style.backgroundImage = `url('${tempCover}')`;
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    function switchProfileTab(tabName, element) {
-        document.querySelectorAll('.p-tab-btn').forEach(btn => btn.classList.remove('active'));
-        element.classList.add('active');
-        document.querySelectorAll('.profile-tab-body').forEach(body => body.classList.remove('active'));
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-    }
-    function changeProfileBg(color, element) {
-        document.querySelectorAll('#profileBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        document.querySelector('.profile-box').style.background = color;
-    }
-    function changeNameColor(color, element) {
-        document.querySelectorAll('#nameColors .color-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        document.getElementById('pModalName').style.color = color;
-    }
-    function changeNameBg(color, element) {
-        document.querySelectorAll('#nameBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        document.getElementById('pModalName').style.background = color;
-    }
-    function addNameGif(gifSrc, element) {
-        document.querySelectorAll('.name-gif-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        currentUser.nameGif = gifSrc;
-        const nameElement = document.getElementById('pModalName');
-        nameElement.innerHTML = `${currentUser.name} <img src="${gifSrc}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
-        localStorage.setItem('user_name_gif', gifSrc);
-    }
-    function previewProfile() {
-        appendMessage("👁️ معاينة", currentUser.avatar, "هكذا سيظهر بروفايلك للآخرين ✨", true);
-    }
-    function saveProfileChanges() {
-        currentUser.avatar = tempAvatar;
-        currentUser.cover = tempCover;
-        localStorage.setItem('user_avatar', currentUser.avatar);
-        localStorage.setItem('user_cover', currentUser.cover);
-        localStorage.setItem('user_name', currentUser.name);
-        if (currentUser.nameGif) {
-            localStorage.setItem('user_name_gif', currentUser.nameGif);
-        }
-        appendMessage("💾 حفظ", currentUser.avatar, "تم حفظ تغييرات البروفايل بنجاح ✅", true);
-        closeProfileModal();
-    }
-    function toggleFriend() {
-        isFriend = !isFriend;
-        const btn = document.getElementById('friendBtn');
-        if (isFriend) { btn.textContent = '✅ صديق'; btn.classList.add('friended'); } 
-        else { btn.textContent = '➕ إضافة صديق'; btn.classList.remove('friended'); }
-    }
-    function toggleLike() {
-        isLiked = !isLiked;
-        const btn = document.getElementById('likeBtn');
-        if (isLiked) { btn.textContent = '💖 معجب'; btn.classList.add('liked'); } 
-        else { btn.textContent = '💖 إعجاب'; btn.classList.remove('liked'); }
-    }
-    function toggleIgnore() {
-        isIgnored = !isIgnored;
-        const btn = document.getElementById('ignoreBtn');
-        if (isIgnored) { btn.textContent = '🚫 تم التجاهل'; btn.classList.add('ignored'); } 
-        else { btn.textContent = '🚫 تجاهل'; btn.classList.remove('ignored'); }
-    }
-    function sendPrivateMessage() {
-        const msg = prompt("أرسل رسالة خاصة:");
-        if (msg && msg.trim()) {
-            appendMessage("💬 رسالة خاصة", currentUser.avatar, msg, false);
-            closeProfileModal();
-        }
-    }
-
-    // ============ الحالة اليومية ============
-    function setStatusType(type, element) {
-        currentStatusType = type;
-        document.querySelectorAll('.status-type-btn').forEach(btn => btn.classList.remove('active'));
-        element.classList.add('active');
-        
-        const textInput = document.getElementById('dailyStatusInput');
-        const fileInput = document.getElementById('statusFileInput');
-        const mediaPreview = document.getElementById('statusMediaPreview');
-        
-        if (type === 'text') {
-            textInput.style.display = 'block';
-            fileInput.style.display = 'none';
-            mediaPreview.style.display = 'none';
-            textInput.placeholder = 'أضف حالة يومية...';
-        } else {
-            textInput.style.display = 'none';
-            fileInput.style.display = 'block';
-            mediaPreview.style.display = 'block';
-        }
-    }
-
-    function previewStatusFile(event) {
-        const file = event.target.files[0];
-        if (file) {
-            tempStatusFile = file;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById('statusMediaPreview');
-                preview.innerHTML = '';
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    preview.appendChild(img);
-                } else if (file.type.startsWith('video/')) {
-                    const video = document.createElement('video');
-                    video.src = e.target.result;
-                    video.controls = true;
-                    preview.appendChild(video);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-
-    function addDailyStatus() {
-        if (currentStatusType === 'text') {
-            const statusInput = document.getElementById('dailyStatusInput');
-            const status = statusInput.value.trim();
-            if (status) {
-                localStorage.setItem('daily_status', status);
-                localStorage.setItem('daily_status_type', 'text');
-                localStorage.setItem('daily_status_time', Date.now());
-                statusInput.value = '';
-                appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة الحالة: "${status}"`, true);
-            }
-        } else if (tempStatusFile) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                localStorage.setItem('daily_status', e.target.result);
-                localStorage.setItem('daily_status_type', currentStatusType);
-                localStorage.setItem('daily_status_time', Date.now());
-                appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة ${currentStatusType === 'image' ? 'صورة' : 'فيديو'} للحالة اليومية`, true);
-            };
-            reader.readAsDataURL(tempStatusFile);
-        }
-    }
-
-    // ============ الموسيقى ============
-    function toggleMusic() {
-        musicPlaying = !musicPlaying;
-        const btn = document.getElementById('musicBtn');
-        if (musicPlaying) { btn.textContent = '⏸️ إيقاف مؤقت'; btn.classList.add('playing'); } 
-        else { btn.textContent = '🎵 تشغيل موسيقى'; btn.classList.remove('playing'); }
-    }
-    function changeMusicTrack() {
-        currentMusicTrack = (currentMusicTrack + 1) % musicTracks.length;
-        if (musicPlaying) {
-            appendMessage("🎵 موسيقى", currentUser.avatar, `تغيير المقطوعة إلى: ${musicTracks[currentMusicTrack].name}`, true);
-        }
-    }
-    function stopMusic() {
-        musicPlaying = false;
-        document.getElementById('musicBtn').textContent = '🎵 تشغيل موسيقى';
-        document.getElementById('musicBtn').classList.remove('playing');
-    }
-
-    // ============ التنقل السفلي ============
-    function bottomNavAction(action) {
-        document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.closest('.nav-tab-btn').classList.add('active');
-        if (action === 'options') {
-            showUserProfile(currentUser.name, currentUser.avatar, true);
-        } else if (action === 'online') {
-            let userList = "المتصلون الآن:\n";
-            onlineUsers.forEach(user => { userList += `${user.rank} ${user.name} 🟢\n`; });
-            appendMessage("👥 المتصلين", "17.gif", userList, true);
-        } else if (action === 'home') {
-            appendMessage("🏠 النظام", "17.gif", "أهلاً بك في الرئيسية!", true);
-        }
-    }
-
-    // ============ تحميل البيانات ============
-    function loadSavedData() {
-        const savedName = localStorage.getItem('user_name');
-        if (savedName) currentUser.name = savedName;
-        const savedAvatar = localStorage.getItem('user_avatar');
-        if (savedAvatar) { currentUser.avatar = savedAvatar; tempAvatar = savedAvatar; }
-        const savedCover = localStorage.getItem('user_cover');
-        if (savedCover) { currentUser.cover = savedCover; tempCover = savedCover; }
-        const savedNameGif = localStorage.getItem('user_name_gif');
-        if (savedNameGif) {
-            currentUser.nameGif = savedNameGif;
-            const nameElement = document.getElementById('pModalName');
-            if (nameElement) {
-                nameElement.innerHTML = `${currentUser.name} <img src="${savedNameGif}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
-            }
-        }
-    }
-</script>
+    </script>
 </body>
 </html>
