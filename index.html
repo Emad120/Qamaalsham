@@ -1,239 +1,923 @@
-        // ============ البروفايل ============
-        function showUserProfile(name, avatar, isCurrentUser = false) {
-            document.getElementById('pModalName').textContent = name;
-            document.getElementById('pModalAvatar').src = avatar;
-            
-            const actionsRow = document.getElementById('profileActionsRow');
-            if (isCurrentUser || name === currentUser.name) {
-                actionsRow.style.display = 'none';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قمر الشام - الشات الملكي</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-secondary: #1e293b;
+            --accent-gold: #f59e0b;
+            --accent-pink: #ec4899;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        header { background: var(--bg-secondary); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .toggle-btn { background: var(--accent-gold); border: none; padding: 6px 12px; border-radius: 8px; color: #000; font-weight: bold; cursor: pointer; }
+        .header-title { font-size: 1.1rem; font-weight: bold; color: var(--accent-gold); }
+
+        .main-container { display: flex; flex: 1; position: relative; overflow: hidden; }
+
+        aside { position: absolute; top: 0; bottom: 0; width: 260px; background: var(--bg-secondary); z-index: 100; transition: transform 0.3s ease; display: flex; flex-direction: column; padding: 15px; border-color: #334155; }
+        .right-aside { right: -260px; border-left: 1px solid #334155; }
+        .right-aside.active { transform: translateX(-260px); }
+        .left-aside { left: -260px; border-right: 1px solid #334155; }
+        .left-aside.active { transform: translateX(260px); }
+
+        .aside-header { font-size: 1rem; font-weight: bold; margin-bottom: 15px; color: var(--accent-gold); border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        .room-item, .nav-item { padding: 10px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .room-item:hover, .nav-item:hover, .room-item.active { background: #334155; }
+        .room-badge { background: var(--accent-pink); color: #fff; padding: 2px 6px; border-radius: 10px; font-size: 0.75rem; }
+
+        .chat-area { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); }
+
+        .voice-mics-bar { background: rgba(30, 41, 59, 0.9); padding: 8px; display: flex; justify-content: center; gap: 10px; border-bottom: 1px solid #334155; transition: max-height 0.3s; max-height: 100px; }
+        .voice-mics-bar.hidden { max-height: 0; padding: 0; overflow: hidden; border: none; }
+        .mic-slot { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px dashed var(--accent-gold); position: relative; }
+        .mic-slot.occupied { border-style: solid; border-color: var(--accent-pink); }
+        .mic-user-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .mics-toggle-arrow { background: none; border: none; color: var(--accent-gold); cursor: pointer; font-size: 0.8rem; text-align: center; width: 100%; padding: 2px; }
+
+        .messages-container { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .chat-message-row { display: flex; gap: 10px; align-items: flex-start; }
+        .user-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid var(--accent-gold); }
+        .message-content-box { display: flex; flex-direction: column; max-width: 75%; }
+        .user-name-tag { font-size: 0.8rem; color: var(--accent-gold); margin-bottom: 2px; cursor: pointer; }
+        .chat-message-group { display: flex; flex-direction: column; gap: 5px; }
+        .chat-text-msg { 
+            background: var(--bg-secondary); 
+            padding: 10px 14px; 
+            border-radius: 12px; 
+            font-size: 0.95krem; 
+            color: var(--text-main); 
+            overflow-wrap: break-word; 
+            word-break: normal; 
+            line-height: 1.5;
+        }
+        .chat-text-msg.bot-msg { background: #312e81; border: 1px solid #4f46e5; }
+        .chat-animated-sticker { width: 100px; height: 100px; object-fit: contain; border-radius: 8px; }
+
+        .chat-input-bar { padding: 10px; background: var(--bg-secondary); border-top: 1px solid #334155; position: relative; }
+        .input-group { display: flex; gap: 8px; }
+        .chat-input { flex: 1; background: var(--bg-main); border: 1px solid #334155; border-radius: 8px; padding: 10px; color: #fff; outline: none; }
+        .send-btn, .plus-options-btn { background: var(--accent-gold); border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .plus-options-btn { background: #334155; color: #fff; font-size: 1.2rem; }
+
+        .animated-emojis-popup { position: absolute; bottom: 65px; left: 10px; background: var(--bg-secondary); border: 1px solid #334155; border-radius: 10px; padding: 10px; display: none; gap: 8px; z-index: 110; }
+        .animated-emojis-popup.show { display: flex; }
+        .animated-emoji-btn { background: none; border: none; cursor: pointer; width: 40px; height: 40px; }
+        .animated-emoji-btn img { width: 100%; height: 100%; object-fit: contain; }
+
+        .selected-preview-bar { display: none; padding: 5px; background: #0f172a; border-radius: 6px; margin-bottom: 8px; gap: 5px; flex-wrap: wrap; }
+        .selected-preview-bar.show { display: flex; }
+        .preview-item { position: relative; width: 40px; height: 40px; }
+        .preview-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+        .preview-item button { position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; cursor: pointer; }
+
+        .arabi-bottom-nav { background: var(--bg-secondary); display: flex; justify-content: space-around; padding: 8px; border-top: 1px solid #334155; }
+        .nav-tab-btn { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; cursor: pointer; gap: 2px; }
+        .nav-tab-btn.active, .nav-tab-btn:hover { color: var(--accent-gold); }
+        .nav-tab-btn .icon { font-size: 1.2rem; }
+
+        .confirm-dialog-overlay, .profile-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .confirm-dialog-overlay.show, .profile-modal-overlay.show { display: flex; }
+        .confirm-dialog { background: var(--bg-secondary); padding: 20px; border-radius: 12px; width: 300px; text-align: center; border: 1px solid #334155; }
+        .confirm-dialog-btns { display: flex; justify-content: center; gap: 10px; margin-top: 15px; }
+        .confirm-yes-btn { background: var(--accent-pink); color: #fff; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; }
+        .confirm-no-btn { background: #334155; color: #fff; border: none; padding: 6px 15px; border-radius: 6px; cursor: pointer; }
+
+        .profile-box { background: var(--bg-secondary); width: 100%; max-width: 400px; max-height: 90vh; border-radius: 12px; overflow-y: auto; border: 1px solid #334155; }
+        .profile-cover { height: 150px; background-size: cover; background-position: center; position: relative; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; }
+        .p-top-actions { display: flex; justify-content: space-between; }
+        .p-close-btn, .p-edit-btn-inline { background: rgba(0,0,0,0.6); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .profile-avatar-area { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--accent-gold); overflow: hidden; margin-top: 10px; cursor: pointer; }
+        .profile-avatar-area img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-user-details { padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px; margin-top: 5px; }
+        .p-rank-title { font-size: 0.75rem; color: var(--accent-gold); }
+        .p-username-row { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 1.1rem; }
+        .p-bio { font-size: 0.85rem; color: var(--text-muted); }
+        
+        .profile-actions-row { display: flex; gap: 5px; padding: 10px; justify-content: center; border-bottom: 1px solid #334155; }
+        .profile-action-btn { background: #334155; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+        .profile-action-btn.friended { background: #10b981; }
+        .profile-action-btn.liked { background: var(--accent-pink); }
+        .profile-action-btn.ignored { background: #ef4444; }
+
+        .daily-status-section { padding: 10px; border-bottom: 1px solid #334155; }
+        .status-type-buttons { display: flex; gap: 5px; margin-bottom: 8px; }
+        .status-type-btn { flex: 1; background: #334155; border: none; color: #fff; padding: 4px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; }
+        .status-type-btn.active { background: var(--accent-gold); color: #000; font-weight: bold; }
+        .daily-status-input { width: 100%; background: var(--bg-main); border: 1px solid #334155; padding: 6px; border-radius: 6px; color: #fff; margin-bottom: 8px; font-size: 0.85rem; }
+        .status-file-input { display: none; }
+        .status-media-preview { max-height: 100px; overflow: hidden; margin-bottom: 8px; text-align: center; display: none; }
+        .status-media-preview img, .status-media-preview video { max-height: 90px; border-radius: 6px; }
+
+        .music-player-section { padding: 10px; display: flex; gap: 5px; border-bottom: 1px solid #334155; justify-content: center; }
+        .music-control-btn { background: #334155; border: none; color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; }
+        .music-control-btn.playing { background: var(--accent-gold); color: #000; font-weight: bold; }
+
+        .bot-memory-section { padding: 10px; border-bottom: 1px solid #334155; max-height: 150px; overflow-y: auto; }
+        .bot-memory-item { display: flex; justify-content: space-between; align-items: center; background: #334155; padding: 4px 8px; border-radius: 4px; margin-bottom: 4px; font-size: 0.8rem; }
+        .bot-memory-delete-btn { background: #ef4444; color: #fff; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 0.7rem; }
+
+        .profile-tabs-header { display: flex; border-bottom: 1px solid #334155; }
+        .p-tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 10px; cursor: pointer; font-weight: bold; font-size: 0.85rem; }
+        .p-tab-btn.active { color: var(--accent-gold); border-bottom: 2px solid var(--accent-gold); }
+        .profile-tab-body { display: none; padding: 15px; }
+        .profile-tab-body.active { display: block; }
+        .p-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9rem; }
+        .color-picker-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .color-option { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+        .color-option.selected { border-color: #fff; }
+        .name-gif-options { display: flex; gap: 8px; margin-bottom: 10px; }
+        .name-gif-option { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid transparent; }
+        .name-gif-option.selected { border-color: var(--accent-gold); }
+        .preview-profile-btn, .save-profile-btn { width: 100%; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .preview-profile-btn { background: #334155; color: #fff; }
+        .save-profile-btn { background: var(--accent-gold); color: #000; }
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="toggle-btn" onclick="toggleSidebar(event, 'right')">📂 الرومات</button>
+    <div class="header-title" id="headerTitle">قمر الشام - الروم العام</div>
+    <button class="toggle-btn" onclick="toggleSidebar(event, 'left')">👑 الرتب</button>
+</header>
+
+<main class="main-container" id="mainContainer">
+    <aside class="right-aside" id="rightAside" onclick="event.stopPropagation()">
+        <div class="aside-header">🏰 الرومات والأقسام</div>
+        <div class="room-item active" onclick="switchRoom('عام', this)">
+            📌 الروم العام
+            <span class="room-badge">150</span>
+        </div>
+        <div class="room-item" onclick="switchRoom('ديوان الحكم', this)">
+            👑 ديوان الحكم
+            <span class="room-badge">25</span>
+        </div>
+        <div class="room-item" onclick="switchRoom('ليالي الشعر', this)">
+            📜 ليالي الشعر
+            <span class="room-badge">45</span>
+        </div>
+        <div class="room-item" onclick="switchRoom('خاص', this)">
+            🔒 الخاص مع البوت
+        </div>
+    </aside>
+
+    <section class="chat-area" id="chatArea">
+        <div style="position: relative;">
+            <div class="voice-mics-bar" id="voiceMicsBar">
+                <div class="mic-slot" onclick="requestMicToggle(0)" id="micSlot0"><span class="mic-icon">🎤</span></div>
+                <div class="mic-slot" onclick="requestMicToggle(1)" id="micSlot1"><span class="mic-icon">🎤</span></div>
+                <div class="mic-slot" onclick="requestMicToggle(2)" id="micSlot2"><span class="mic-icon">🎤</span></div>
+                <div class="mic-slot" onclick="requestMicToggle(3)" id="micSlot3"><span class="mic-icon">🎤</span></div>
+                <button class="mic-toggle-btn" onclick="toggleMuteAllMics()" style="background:var(--bg-main); border:1px solid #334155; color:#fff; border-radius:6px; padding:0 8px; cursor:pointer;">🔇 كتم</button>
+            </div>
+            <button class="mics-toggle-arrow" id="micsArrow" onclick="toggleMicsBar()">▼</button>
+        </div>
+
+        <div class="messages-container" id="messagesContainer"></div>
+
+        <div class="chat-input-bar" onclick="event.stopPropagation()">
+            <div class="selected-preview-bar" id="previewBar"></div>
+            <div class="animated-emojis-popup" id="emojisPopup">
+                <button class="animated-emoji-btn" onclick="addStickerToPreview('17.gif')"><img src="17.gif" alt="st"></button>
+                <button class="animated-emoji-btn" onclick="addStickerToPreview('Xz28.gif')"><img src="Xz28.gif" alt="st"></button>
+                <button class="animated-emoji-btn" onclick="addStickerToPreview('a32.gif')"><img src="a32.gif" alt="st"></button>
+                <button class="animated-emoji-btn" onclick="addStickerToPreview('1.gif')"><img src="1.gif" alt="st"></button>
+            </div>
+
+            <div class="input-group">
+                <button class="plus-options-btn" onclick="toggleEmojisPopup(event)">+</button>
+                <input type="text" id="messageInput" class="chat-input" placeholder="اكتب رسالتك..." onkeypress="checkEnter(event)" />
+                <button class="send-btn" onclick="sendMessage()">إرسال</button>
+            </div>
+        </div>
+    </section>
+
+    <aside class="left-aside" id="leftAside" onclick="event.stopPropagation()">
+        <div class="aside-header">👑 هرمية الرتب</div>
+        <div class="nav-item">👑 الملك (عماد)</div>
+        <div class="nav-item" style="color:var(--accent-pink)">💖 الملكة الحصرية (آيلا)</div>
+        <div class="nav-item">⭐ سوبر أدمن (3)</div>
+        <div class="nav-item">🛡️ أدمن (5)</div>
+        <div class="nav-item">🎖️ مشرف (8)</div>
+        <div class="nav-item">✨ VIP (15)</div>
+        <div class="nav-item">👤 عضو (50)</div>
+    </aside>
+</main>
+
+<nav class="arabi-bottom-nav" onclick="event.stopPropagation()">
+    <button class="nav-tab-btn" onclick="bottomNavAction('options')">
+        <span class="icon">⚙️</span>
+        <span>خيارات</span>
+    </button>
+    <button class="nav-tab-btn" onclick="bottomNavAction('online')">
+        <span class="icon">👥</span>
+        <span>المتصلين</span>
+    </button>
+    <button class="nav-tab-btn active" onclick="bottomNavAction('home')">
+        <span class="icon">🏠</span>
+        <span>الرئيسية</span>
+    </button>
+    <button class="nav-tab-btn" onclick="bottomNavAction('friends')">
+        <span class="icon">➕</span>
+        <span>الأصدقاء</span>
+    </button>
+</nav>
+
+<div class="confirm-dialog-overlay" id="confirmDialog" onclick="closeConfirmDialog()">
+    <div class="confirm-dialog" onclick="event.stopPropagation()">
+        <h3 id="confirmTitle" style="color:var(--accent-gold); margin-bottom:8px;">تأكيد</h3>
+        <p id="confirmMessage">هل أنت متأكد؟</p>
+        <div class="confirm-dialog-btns">
+            <button class="confirm-yes-btn" onclick="confirmAction()">نعم</button>
+            <button class="confirm-no-btn" onclick="closeConfirmDialog()">إلغاء</button>
+        </div>
+    </div>
+</div>
+
+<div class="profile-modal-overlay" id="profileModal" onclick="closeProfileModal()">
+    <div class="profile-box" onclick="event.stopPropagation()">
+        <div class="profile-cover" id="modalCoverArea" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop');">
+            <div class="p-top-actions">
+                <button class="p-close-btn" onclick="closeProfileModal()" title="إغلاق">✕</button>
+                <button class="p-edit-btn-inline" onclick="document.getElementById('coverFileInput').click()">🖼️ غلاف</button>
+            </div>
+            <div class="profile-avatar-area" onclick="document.getElementById('avatarFileInput').click()">
+                <img src="1.gif" alt="Avatar" id="pModalAvatar">
+            </div>
+            <div class="profile-user-details">
+                <div class="p-rank-title" id="pModalRank">Super Admin ⭐</div>
+                <div class="p-username-row">
+                    <div class="p-username" id="pModalName">عماد ♠</div>
+                    <button class="p-edit-btn-inline" onclick="changeNamePrompt()">✏️</button>
+                </div>
+                <div class="p-bio" id="pModalBio">متمرّد بطبعي ♠</div>
+            </div>
+        </div>
+        <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" onchange="previewAvatarImage(event)">
+        <input type="file" id="coverFileInput" accept="image/*" style="display: none;" onchange="previewCoverImage(event)">
+        
+        <div class="profile-actions-row" id="profileActionsRow" style="display: none;">
+            <button class="profile-action-btn" id="friendBtn" onclick="toggleFriend()">➕ إضافة صديق</button>
+            <button class="profile-action-btn" id="likeBtn" onclick="toggleLike()">💖 إعجاب</button>
+            <button class="profile-action-btn" onclick="sendPrivateMessage()">💬 رسالة خاصة</button>
+            <button class="profile-action-btn" id="ignoreBtn" onclick="toggleIgnore()">🚫 تجاهل</button>
+        </div>
+
+        <div class="daily-status-section">
+            <div class="status-type-buttons">
+                <button class="status-type-btn active" onclick="setStatusType('text', this)">📝 كتابة</button>
+                <button class="status-type-btn" onclick="setStatusType('image', this)">🖼️ صورة</button>
+                <button class="status-type-btn" onclick="setStatusType('video', this)">🎬 فيديو</button>
+            </div>
+            <input type="text" class="daily-status-input" id="dailyStatusInput" placeholder="أضف حالة يومية..." onkeypress="if(event.key==='Enter') addDailyStatus()">
+            <input type="file" class="status-file-input" id="statusFileInput" accept="image/*,video/*" onchange="previewStatusFile(event)">
+            <div class="status-media-preview" id="statusMediaPreview"></div>
+            <button class="profile-action-btn" style="width:100%; background:var(--accent-gold); color:#000; font-weight:bold;" onclick="addDailyStatus()">📝 إضافة حالة</button>
+            <div class="status-viewers-list" id="statusViewersList"></div>
+        </div>
+
+        <div class="music-player-section">
+            <button class="music-control-btn" id="musicBtn" onclick="toggleMusic()">🎵 تشغيل موسيقى</button>
+            <button class="music-control-btn" onclick="changeMusicTrack()">🎶 تغيير</button>
+            <button class="music-control-btn" onclick="stopMusic()">⏹️ إيقاف</button>
+        </div>
+
+        <div class="bot-memory-section" id="botMemorySection" style="display: none;">
+            <div class="aside-header" style="font-size: 0.8rem; padding: 4px; margin-bottom: 6px;">🤖 ذاكرة البوت</div>
+            <div id="botMemoryList"></div>
+        </div>
+
+        <div class="profile-tabs-header">
+            <button class="p-tab-btn active" onclick="switchProfileTab('account', this)">حساب</button>
+            <button class="p-tab-btn" onclick="switchProfileTab('appearance', this)">المظهر</button>
+            <button class="p-tab-btn" onclick="switchProfileTab('stats', this)">إحصائيات</button>
+        </div>
+        
+        <div class="profile-tab-body active" id="tab-account">
+            <div class="p-info-row"><span class="p-info-label">الصورة الشخصية</span><button class="p-edit-btn-inline" style="background:var(--accent-gold); color:#000;" onclick="document.getElementById('avatarFileInput').click()">اختر</button></div>
+            <div class="p-info-row"><span class="p-info-label">البلد</span><span class="p-info-val">سوريا - دمشق</span></div>
+            <div class="p-info-row"><span class="p-info-label">العمر</span><span class="p-info-val">43 سنة</span></div>
+            <div class="p-info-row"><span class="p-info-label">الحالة</span><span class="p-info-val">متصل 🟢</span></div>
+            <button class="preview-profile-btn" onclick="previewProfile()">👁️ معاينة البروفايل</button>
+            <button class="save-profile-btn" onclick="saveProfileChanges()">💾 حفظ التغييرات</button>
+        </div>
+        
+        <div class="profile-tab-body" id="tab-appearance">
+            <div class="p-info-row"><span class="p-info-label">لون خلفية البروفايل</span></div>
+            <div class="color-picker-row" id="profileBgColors">
+                <div class="color-option" style="background:#1f2937;" onclick="changeProfileBg('#1f2937', this)"></div>
+                <div class="color-option" style="background:#111827;" onclick="changeProfileBg('#111827', this)"></div>
+                <div class="color-option" style="background:#312e81;" onclick="changeProfileBg('#312e81', this)"></div>
+                <div class="color-option" style="background:#831843;" onclick="changeProfileBg('#831843', this)"></div>
+                <div class="color-option" style="background:#064e3b;" onclick="changeProfileBg('#064e3b', this)"></div>
+            </div>
+            <div class="p-info-row"><span class="p-info-label">لون الاسم</span></div>
+            <div class="color-picker-row" id="nameColors">
+                <div class="color-option" style="background:#ffffff;" onclick="changeNameColor('#ffffff', this)"></div>
+                <div class="color-option" style="background:#fde047;" onclick="changeNameColor('#fde047', this)"></div>
+                <div class="color-option" style="background:#ec4899;" onclick="changeNameColor('#ec4899', this)"></div>
+                <div class="color-option" style="background:#8b5cf6;" onclick="changeNameColor('#8b5cf6', this)"></div>
+                <div class="color-option" style="background:#10b981;" onclick="changeNameColor('#10b981', this)"></div>
+            </div>
+            <div class="p-info-row"><span class="p-info-label">خلفية الاسم</span></div>
+            <div class="color-picker-row" id="nameBgColors">
+                <div class="color-option" style="background:rgba(0,0,0,0.5);" onclick="changeNameBg('rgba(0,0,0,0.5)', this)"></div>
+                <div class="color-option" style="background:rgba(217,119,6,0.5);" onclick="changeNameBg('rgba(217,119,6,0.5)', this)"></div>
+                <div class="color-option" style="background:rgba(236,72,153,0.5);" onclick="changeNameBg('rgba(236,72,153,0.5)', this)"></div>
+                <div class="color-option" style="background:rgba(139,92,246,0.5);" onclick="changeNameBg('rgba(139,92,246,0.5)', this)"></div>
+                <div class="color-option" style="background:rgba(16,185,129,0.5);" onclick="changeNameBg('rgba(16,185,129,0.5)', this)"></div>
+            </div>
+            <div class="p-info-row"><span class="p-info-label">GIF للاسم</span></div>
+            <div class="name-gif-options" id="nameGifOptions">
+                <img src="1.gif" class="name-gif-option" onclick="addNameGif('1.gif', this)" alt="gif1">
+                <img src="17.gif" class="name-gif-option" onclick="addNameGif('17.gif', this)" alt="gif2">
+                <img src="a32.gif" class="name-gif-option" onclick="addNameGif('a32.gif', this)" alt="gif3">
+                <img src="Xz28.gif" class="name-gif-option" onclick="addNameGif('Xz28.gif', this)" alt="gif4">
+            </div>
+            <button class="preview-profile-btn" onclick="previewProfile()">👁️ معاينة</button>
+            <button class="save-profile-btn" onclick="saveProfileChanges()">💾 حفظ التغييرات</button>
+        </div>
+        
+        <div class="profile-tab-body" id="tab-stats">
+            <div class="p-info-row"><span class="p-info-label">الرسائل</span><span class="p-info-val">1,250</span></div>
+            <div class="p-info-row"><span class="p-info-label">ساعات التواجد</span><span class="p-info-val">350 ساعة</span></div>
+            <div class="p-info-row"><span class="p-info-label">الأصدقاء</span><span class="p-info-val">45 صديق</span></div>
+            <div class="p-info-row"><span class="p-info-label">المستوى</span><span class="p-info-val">25 ⭐</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============ البيانات الأساسية ============
+    let currentUser = { 
+        name: "عماد", 
+        bio: "متمرّد بطبعي ♠", 
+        avatar: "1.gif", 
+        cover: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop",
+        rank: "Super Admin ⭐",
+        nameGif: null
+    };
+
+    let tempAvatar = currentUser.avatar;
+    let tempCover = currentUser.cover;
+    let currentRoom = "عام";
+    let activeMics = [false, false, false, false];
+    let micsMuted = false;
+    let isFriend = false;
+    let isLiked = false;
+    let isIgnored = false;
+    let currentMusicTrack = 0;
+    let musicPlaying = false;
+    let pendingMicAction = null;
+    let currentStatusType = 'text';
+    let tempStatusFile = null;
+
+    const musicTracks = [
+        { name: "موال شامي" },
+        { name: "قدود حلبية" },
+        { name: "طقطوقة" }
+    ];
+
+    const onlineUsers = [
+        { name: "عماد", avatar: "1.gif", rank: "الملك 👑" },
+        { name: "آيلا", avatar: "1.gif", rank: "الملكة 💖" },
+        { name: "سامر", avatar: "17.gif", rank: "VIP ✨" },
+        { name: "لينا", avatar: "a32.gif", rank: "مشرفة 🎖️" }
+    ];
+
+    let botMemory = JSON.parse(localStorage.getItem('bot_custom_memory')) || {
+        "مين آيلا": "الملكة آيلا هي جوهرة الفضاء وسلطانة القلوب المحترمة 👑💖",
+        "بتحب آيلا": "بعشقها للغاليين ع قلبي الملكة آيلا طبعاً! 🥰🌺",
+        "ارقص": "غصب عني برقص 💃💃",
+        "شلونك": "تمام ومشتاق لأهلي بالشام 🌙✨"
+    };
+
+    // ============ تهيئة التطبيق ============
+    window.addEventListener('DOMContentLoaded', () => {
+        loadSavedData();
+        appendMessage("🤖 بوت قمر الشام", "17.gif", "أهلاً بك يا ملك عماد تحت ياسمين قمر الشام ✨\nالروم العام جاهز، والميكات شغالة!", true);
+        setTimeout(() => {
+            occupyMic(0, onlineUsers[2]);
+            occupyMic(1, onlineUsers[3]);
+        }, 1000);
+    });
+
+    // ============ نظام المايكات ============
+    function requestMicToggle(index) {
+        const isJoining = !activeMics[index];
+        pendingMicAction = { index, isJoining };
+        document.getElementById('confirmTitle').textContent = isJoining ? '🎤 تأكيد الانضمام' : '🎤 تأكيد الخروج';
+        document.getElementById('confirmMessage').textContent = isJoining ? 'هل تريد الانضمام إلى المايك؟' : 'هل تريد الخروج من المايك؟';
+        document.getElementById('confirmDialog').classList.add('show');
+    }
+
+    function confirmAction() {
+        if (pendingMicAction) {
+            const { index, isJoining } = pendingMicAction;
+            if (isJoining) { joinMic(index); } else { leaveMic(index); }
+            pendingMicAction = null;
+        }
+        closeConfirmDialog();
+    }
+
+    function closeConfirmDialog() {
+        document.getElementById('confirmDialog').classList.remove('show');
+        pendingMicAction = null;
+    }
+
+    function joinMic(index) {
+        const micSlot = document.getElementById(`micSlot${index}`);
+        activeMics[index] = true;
+        micSlot.classList.add('occupied', 'speaking');
+        micSlot.innerHTML = `<img src="${currentUser.avatar}" class="mic-user-avatar" alt="${currentUser.name}">`;
+        appendMessage("🔊 نظام الصوت", "17.gif", `${currentUser.name} انضم للمايك رقم ${index + 1} 🎤`, true);
+        setTimeout(() => { micSlot.classList.remove('speaking'); }, 3000);
+    }
+
+    function leaveMic(index) {
+        const micSlot = document.getElementById(`micSlot${index}`);
+        activeMics[index] = false;
+        micSlot.classList.remove('occupied', 'speaking');
+        micSlot.innerHTML = '<span class="mic-icon">🎤</span>';
+        appendMessage("🔊 نظام الصوت", "17.gif", `${currentUser.name} غادر المايك رقم ${index + 1}`, true);
+    }
+
+    function occupyMic(index, user) {
+        const micSlot = document.getElementById(`micSlot${index}`);
+        activeMics[index] = true;
+        micSlot.classList.add('occupied');
+        micSlot.innerHTML = `<img src="${user.avatar}" class="mic-user-avatar" alt="${user.name}">`;
+    }
+
+    function toggleMicsBar() {
+        const bar = document.getElementById('voiceMicsBar');
+        const arrow = document.getElementById('micsArrow');
+        bar.classList.toggle('hidden');
+        if (bar.classList.contains('hidden')) {
+            arrow.textContent = '▲';
+        } else {
+            arrow.textContent = '▼';
+        }
+    }
+
+    function toggleMuteAllMics() {
+        micsMuted = !micsMuted;
+        document.querySelectorAll('.mic-slot').forEach(slot => {
+            if (micsMuted) { slot.classList.add('muted-by-user'); } 
+            else { slot.classList.remove('muted-by-user'); }
+        });
+        appendMessage("🔇 نظام الصوت", "17.gif", micsMuted ? "تم كتم جميع المايكات" : "تم إلغاء كتم المايكات", true);
+    }
+
+    // ============ نظام المراسلة ============
+    function appendMessage(senderName, senderAvatar, textContent, isBot = false, stickers = []) {
+        const container = document.getElementById('messagesContainer');
+        const row = document.createElement('div'); 
+        row.className = 'chat-message-row';
+        const avatar = document.createElement('img'); 
+        avatar.src = senderAvatar; 
+        avatar.className = 'user-avatar';
+        avatar.onclick = () => showUserProfile(senderName, senderAvatar, senderName === currentUser.name);
+        row.appendChild(avatar);
+        const contentBox = document.createElement('div'); 
+        contentBox.className = 'message-content-box';
+        const nameTag = document.createElement('div'); 
+        nameTag.className = 'user-name-tag'; 
+        nameTag.textContent = senderName;
+        nameTag.onclick = () => {
+            const input = document.getElementById('messageInput');
+            input.value = `@${senderName} ` + input.value;
+            input.focus();
+        };
+        contentBox.appendChild(nameTag);
+        const group = document.createElement('div'); 
+        group.className = 'chat-message-group';
+        if (textContent) {
+            const textMsg = document.createElement('div'); 
+            const isArabic = /[\u0600-\u06FF]/.test(textContent);
+            textMsg.className = 'chat-text-msg ' + (isBot ? 'bot-msg ' : '') + (isArabic ? 'arabic-text' : '');
+            textMsg.textContent = textContent; 
+            group.appendChild(textMsg);
+        }
+        stickers.forEach(s => {
+            const img = document.createElement('img'); 
+            img.src = s; 
+            img.className = 'chat-animated-sticker'; 
+            group.appendChild(img);
+        });
+        contentBox.appendChild(group);
+        row.appendChild(contentBox);
+        container.appendChild(row);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        const selectedStickers = getSelectedStickers();
+        if (!message && selectedStickers.length === 0) return;
+        appendMessage(currentUser.name, currentUser.avatar, message, false, selectedStickers);
+        if (message) {
+            if (currentRoom === 'خاص' && (message.includes("بوت تعلم") || message.includes("البوت تعلم") || message.includes("بووت تعلم") || message.includes("البووت تعلم"))) { 
+                handleBotLearning(message); 
             } else {
-                actionsRow.style.display = 'flex';
+                if (currentRoom === 'خاص' || message.includes("بوت") || message.includes("بووت") || message.includes("البوت") || message.includes("البووت")) {
+                    const botReply = findAnswer(message);
+                    if (botReply) {
+                        setTimeout(() => { appendMessage("🤖 بوت قمر الشام", "17.gif", botReply, true); }, 800);
+                    }
+                }
             }
+        }
+        input.value = '';
+        clearPreviewBar();
+    }
+
+    function checkEnter(event) {
+        if (event.key === 'Enter') { sendMessage(); }
+    }
+
+    function findAnswer(msg) {
+        const text = msg.toLowerCase().trim();
+        if (currentRoom !== 'خاص') {
+            for (let key in botMemory) {
+                if (text.includes(key.toLowerCase())) {
+                    return botMemory[key];
+                }
+            }
+            return null;
+        }
+        for (let key in botMemory) {
+            if (text.includes(key.toLowerCase())) {
+                return botMemory[key];
+            }
+        }
+        return "ما تعلمت هذا بعد! علمني إياه بالكتابة:\nبوت تعلم: سؤالك = الجواب";
+    }
+
+    function handleBotLearning(message) {
+        let cleanMsg = message;
+        const patterns = ["بوت تعلم", "البوت تعلم", "بووت تعلم", "البووت تعلم"];
+        for (let pattern of patterns) {
+            cleanMsg = cleanMsg.replace(pattern, "").trim();
+        }
+        cleanMsg = cleanMsg.replace(/^[:,\s]+/, "");
+        
+        const parts = cleanMsg.split("=");
+        if (parts.length === 2) {
+            const question = parts[0].trim();
+            const answer = parts[1].trim();
+            if (question && answer) {
+                botMemory[question] = answer;
+                localStorage.setItem('bot_custom_memory', JSON.stringify(botMemory));
+                appendMessage("🤖 بوت قمر الشام", "17.gif", `✅ تم الحفظ فعلياً!\nالسؤال: "${question}"\nالجواب: "${answer}"\n\nجرب الآن: ${question}`, true);
+                updateBotMemoryUI();
+            } else {
+                appendMessage("🤖 بوت قمر الشام", "17.gif", "❌ خطأ! اكتب بالشكل:\nبوت تعلم: السؤال = الجواب", true);
+            }
+        } else {
+            appendMessage("🤖 بوت قمر الشام", "17.gif", "❌ خطأ! اكتب بالشكل:\nبوت تعلم: السؤال = الجواب\nمثال: بوت تعلم: شلونك = تمام", true);
+        }
+    }
+
+    // ============ ذاكرة البوت UI ============
+    function updateBotMemoryUI() {
+        const memorySection = document.getElementById('botMemorySection');
+        const memoryList = document.getElementById('botMemoryList');
+        
+        if (currentRoom === 'خاص') {
+            memorySection.style.display = 'block';
+            memoryList.innerHTML = '';
             
-            document.getElementById('profileModal').classList.add('show');
-            updateBotMemoryUI();
-        }
-        function closeProfileModal() {
-            document.getElementById('profileModal').classList.remove('show');
-        }
-        function changeNamePrompt() {
-            const newName = prompt("أدخل الاسم الجديد:", currentUser.name);
-            if (newName && newName.trim()) {
-                currentUser.name = newName.trim();
-                document.getElementById('pModalName').textContent = currentUser.name;
+            for (let key in botMemory) {
+                const item = document.createElement('div');
+                item.className = 'bot-memory-item';
+                item.innerHTML = `
+                    <span>${key} = ${botMemory[key]}</span>
+                    <button class="bot-memory-delete-btn" onclick="deleteBotMemory('${key}')">حذف</button>
+                `;
+                memoryList.appendChild(item);
             }
+        } else {
+            memorySection.style.display = 'none';
         }
-        function previewAvatarImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    tempAvatar = e.target.result;
-                    document.getElementById('pModalAvatar').src = tempAvatar;
-                };
-                reader.readAsDataURL(file);
-            }
+    }
+
+    function deleteBotMemory(key) {
+        delete botMemory[key];
+        localStorage.setItem('bot_custom_memory', JSON.stringify(botMemory));
+        updateBotMemoryUI();
+        appendMessage("🤖 بوت قمر الشام", "17.gif", `تم حذف: "${key}" من ذاكرتي`, true);
+    }
+
+    // ============ الملصقات ============
+    let selectedStickers = [];
+    function toggleEmojisPopup(event) {
+        event.stopPropagation();
+        document.getElementById('emojisPopup').classList.toggle('show');
+    }
+    function addStickerToPreview(stickerSrc) {
+        selectedStickers.push(stickerSrc);
+        updatePreviewBar();
+    }
+    function updatePreviewBar() {
+        const previewBar = document.getElementById('previewBar');
+        previewBar.innerHTML = '';
+        if (selectedStickers.length > 0) {
+            previewBar.classList.add('show');
+            selectedStickers.forEach((sticker, index) => {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                const img = document.createElement('img');
+                img.src = sticker;
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = '×';
+                removeBtn.onclick = () => { selectedStickers.splice(index, 1); updatePreviewBar(); };
+                previewItem.appendChild(img);
+                previewItem.appendChild(removeBtn);
+                previewBar.appendChild(previewItem);
+            });
+        } else { previewBar.classList.remove('show'); }
+    }
+    function getSelectedStickers() { return [...selectedStickers]; }
+    function clearPreviewBar() {
+        selectedStickers = [];
+        updatePreviewBar();
+        document.getElementById('emojisPopup').classList.remove('show');
+    }
+
+    // ============ الرومات ============
+    function switchRoom(roomName, element) {
+        currentRoom = roomName;
+        document.getElementById('headerTitle').textContent = `قمر الشام - ${roomName}`;
+        document.querySelectorAll('.room-item').forEach(item => item.classList.remove('active'));
+        if (element) element.classList.add('active');
+        document.getElementById('messagesContainer').innerHTML = '';
+        const welcomeMessages = {
+            'عام': 'أهلاً بك في الروم العام! 🌟\nالبوت هنا يرد فقط على الكلمات المتعلمة',
+            'ديوان الحكم': 'مرحباً بك في ديوان الحكم 👑',
+            'ليالي الشعر': 'أهلاً بك في ليالي الشعر 📜',
+            'خاص': 'هذا روم خاص للتدريب مع البوت 🤖\nمثال: بوت تعلم: شلونك = تمام\n\nلعرض الذاكرة اضغط على أيقونة ⚙️ الخيارات'
+        };
+        appendMessage("🤖 بوت قمر الشام", "17.gif", welcomeMessages[roomName] || `أهلاً بك في روم ${roomName}`, true);
+        document.getElementById('rightAside').classList.remove('active');
+        updateBotMemoryUI();
+    }
+
+    // ============ القوائم ============
+    function toggleSidebar(event, side) {
+        event.stopPropagation();
+        const right = document.getElementById('rightAside');
+        const left = document.getElementById('leftAside');
+        if (side === 'right') { right.classList.toggle('active'); left.classList.remove('active'); } 
+        else { left.classList.toggle('active'); right.classList.remove('active'); }
+        document.getElementById('emojisPopup').classList.remove('show');
+    }
+
+    // ============ البروفايل ============
+    function showUserProfile(name, avatar, isCurrentUser = false) {
+        document.getElementById('pModalName').textContent = name;
+        document.getElementById('pModalAvatar').src = avatar;
+        
+        const actionsRow = document.getElementById('profileActionsRow');
+        if (isCurrentUser || name === currentUser.name) {
+            actionsRow.style.display = 'none';
+        } else {
+            actionsRow.style.display = 'flex';
         }
-        function previewCoverImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    tempCover = e.target.result;
-                    document.getElementById('modalCoverArea').style.backgroundImage = `url('${tempCover}')`;
-                };
-                reader.readAsDataURL(file);
-            }
+        
+        document.getElementById('profileModal').classList.add('show');
+        updateBotMemoryUI();
+    }
+    function closeProfileModal() {
+        document.getElementById('profileModal').classList.remove('show');
+    }
+    function changeNamePrompt() {
+        const newName = prompt("أدخل الاسم الجديد:", currentUser.name);
+        if (newName && newName.trim()) {
+            currentUser.name = newName.trim();
+            document.getElementById('pModalName').textContent = currentUser.name;
         }
-        function switchProfileTab(tabName, element) {
-            document.querySelectorAll('.p-tab-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            document.querySelectorAll('.profile-tab-body').forEach(body => body.classList.remove('active'));
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+    function previewAvatarImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempAvatar = e.target.result;
+                document.getElementById('pModalAvatar').src = tempAvatar;
+            };
+            reader.readAsDataURL(file);
         }
-        function changeProfileBg(color, element) {
-            document.querySelectorAll('#profileBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-            document.querySelector('.profile-box').style.background = color;
+    }
+    function previewCoverImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempCover = e.target.result;
+                document.getElementById('modalCoverArea').style.backgroundImage = `url('${tempCover}')`;
+            };
+            reader.readAsDataURL(file);
         }
-        function changeNameColor(color, element) {
-            document.querySelectorAll('#nameColors .color-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-            document.getElementById('pModalName').style.color = color;
+    }
+    function switchProfileTab(tabName, element) {
+        document.querySelectorAll('.p-tab-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        document.querySelectorAll('.profile-tab-body').forEach(body => body.classList.remove('active'));
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+    function changeProfileBg(color, element) {
+        document.querySelectorAll('#profileBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        document.querySelector('.profile-box').style.background = color;
+    }
+    function changeNameColor(color, element) {
+        document.querySelectorAll('#nameColors .color-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        document.getElementById('pModalName').style.color = color;
+    }
+    function changeNameBg(color, element) {
+        document.querySelectorAll('#nameBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        document.getElementById('pModalName').style.background = color;
+    }
+    function addNameGif(gifSrc, element) {
+        document.querySelectorAll('.name-gif-option').forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        currentUser.nameGif = gifSrc;
+        const nameElement = document.getElementById('pModalName');
+        nameElement.innerHTML = `${currentUser.name} <img src="${gifSrc}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
+        localStorage.setItem('user_name_gif', gifSrc);
+    }
+    function previewProfile() {
+        appendMessage("👁️ معاينة", currentUser.avatar, "هكذا سيظهر بروفايلك للآخرين ✨", true);
+    }
+    function saveProfileChanges() {
+        currentUser.avatar = tempAvatar;
+        currentUser.cover = tempCover;
+        localStorage.setItem('user_avatar', currentUser.avatar);
+        localStorage.setItem('user_cover', currentUser.cover);
+        localStorage.setItem('user_name', currentUser.name);
+        if (currentUser.nameGif) {
+            localStorage.setItem('user_name_gif', currentUser.nameGif);
         }
-        function changeNameBg(color, element) {
-            document.querySelectorAll('#nameBgColors .color-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-            document.getElementById('pModalName').style.background = color;
-        }
-        function addNameGif(gifSrc, element) {
-            document.querySelectorAll('.name-gif-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-            currentUser.nameGif = gifSrc;
-            const nameElement = document.getElementById('pModalName');
-            nameElement.innerHTML = `${currentUser.name} <img src="${gifSrc}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
-            localStorage.setItem('user_name_gif', gifSrc);
-        }
-        function previewProfile() {
-            appendMessage("👁️ معاينة", currentUser.avatar, "هكذا سيظهر بروفايلك للآخرين ✨", true);
-        }
-        function saveProfileChanges() {
-            currentUser.avatar = tempAvatar;
-            currentUser.cover = tempCover;
-            localStorage.setItem('user_avatar', currentUser.avatar);
-            localStorage.setItem('user_cover', currentUser.cover);
-            localStorage.setItem('user_name', currentUser.name);
-            if (currentUser.nameGif) {
-                localStorage.setItem('user_name_gif', currentUser.nameGif);
-            }
-            appendMessage("💾 حفظ", currentUser.avatar, "تم حفظ تغييرات البروفايل بنجاح ✅", true);
+        appendMessage("💾 حفظ", currentUser.avatar, "تم حفظ تغييرات البروفايل بنجاح ✅", true);
+        closeProfileModal();
+    }
+    function toggleFriend() {
+        isFriend = !isFriend;
+        const btn = document.getElementById('friendBtn');
+        if (isFriend) { btn.textContent = '✅ صديق'; btn.classList.add('friended'); } 
+        else { btn.textContent = '➕ إضافة صديق'; btn.classList.remove('friended'); }
+    }
+    function toggleLike() {
+        isLiked = !isLiked;
+        const btn = document.getElementById('likeBtn');
+        if (isLiked) { btn.textContent = '💖 معجب'; btn.classList.add('liked'); } 
+        else { btn.textContent = '💖 إعجاب'; btn.classList.remove('liked'); }
+    }
+    function toggleIgnore() {
+        isIgnored = !isIgnored;
+        const btn = document.getElementById('ignoreBtn');
+        if (isIgnored) { btn.textContent = '🚫 تم التجاهل'; btn.classList.add('ignored'); } 
+        else { btn.textContent = '🚫 تجاهل'; btn.classList.remove('ignored'); }
+    }
+    function sendPrivateMessage() {
+        const msg = prompt("أرسل رسالة خاصة:");
+        if (msg && msg.trim()) {
+            appendMessage("💬 رسالة خاصة", currentUser.avatar, msg, false);
             closeProfileModal();
         }
-        function toggleFriend() {
-            isFriend = !isFriend;
-            const btn = document.getElementById('friendBtn');
-            if (isFriend) { btn.textContent = '✅ صديق'; btn.classList.add('friended'); } 
-            else { btn.textContent = '➕ إضافة صديق'; btn.classList.remove('friended'); }
-        }
-        function toggleLike() {
-            isLiked = !isLiked;
-            const btn = document.getElementById('likeBtn');
-            if (isLiked) { btn.textContent = '💖 معجب'; btn.classList.add('liked'); } 
-            else { btn.textContent = '💖 إعجاب'; btn.classList.remove('liked'); }
-        }
-        function toggleIgnore() {
-            isIgnored = !isIgnored;
-            const btn = document.getElementById('ignoreBtn');
-            if (isIgnored) { btn.textContent = '🚫 تم التجاهل'; btn.classList.add('ignored'); } 
-            else { btn.textContent = '🚫 تجاهل'; btn.classList.remove('ignored'); }
-        }
-        function sendPrivateMessage() {
-            const msg = prompt("أرسل رسالة خاصة:");
-            if (msg && msg.trim()) {
-                appendMessage("💬 رسالة خاصة", currentUser.avatar, msg, false);
-                closeProfileModal();
-            }
-        }
+    }
 
-        // ============ الحالة اليومية ============
-        function setStatusType(type, element) {
-            currentStatusType = type;
-            document.querySelectorAll('.status-type-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            
-            const textInput = document.getElementById('dailyStatusInput');
-            const fileInput = document.getElementById('statusFileInput');
-            const mediaPreview = document.getElementById('statusMediaPreview');
-            
-            if (type === 'text') {
-                textInput.style.display = 'block';
-                fileInput.style.display = 'none';
-                mediaPreview.style.display = 'none';
-                textInput.placeholder = 'أضف حالة يومية...';
-            } else {
-                textInput.style.display = 'none';
-                fileInput.style.display = 'block';
-                mediaPreview.style.display = 'block';
-            }
+    // ============ الحالة اليومية ============
+    function setStatusType(type, element) {
+        currentStatusType = type;
+        document.querySelectorAll('.status-type-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        
+        const textInput = document.getElementById('dailyStatusInput');
+        const fileInput = document.getElementById('statusFileInput');
+        const mediaPreview = document.getElementById('statusMediaPreview');
+        
+        if (type === 'text') {
+            textInput.style.display = 'block';
+            fileInput.style.display = 'none';
+            mediaPreview.style.display = 'none';
+            textInput.placeholder = 'أضف حالة يومية...';
+        } else {
+            textInput.style.display = 'none';
+            fileInput.style.display = 'block';
+            mediaPreview.style.display = 'block';
         }
+    }
 
-        function previewStatusFile(event) {
-            const file = event.target.files[0];
-            if (file) {
-                tempStatusFile = file;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('statusMediaPreview');
-                    preview.innerHTML = '';
-                    if (file.type.startsWith('image/')) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        preview.appendChild(img);
-                    } else if (file.type.startsWith('video/')) {
-                        const video = document.createElement('video');
-                        video.src = e.target.result;
-                        video.controls = true;
-                        preview.appendChild(video);
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function addDailyStatus() {
-            if (currentStatusType === 'text') {
-                const statusInput = document.getElementById('dailyStatusInput');
-                const status = statusInput.value.trim();
-                if (status) {
-                    localStorage.setItem('daily_status', status);
-                    localStorage.setItem('daily_status_type', 'text');
-                    localStorage.setItem('daily_status_time', Date.now());
-                    statusInput.value = '';
-                    appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة الحالة: "${status}"`, true);
+    function previewStatusFile(event) {
+        const file = event.target.files[0];
+        if (file) {
+            tempStatusFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('statusMediaPreview');
+                preview.innerHTML = '';
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.src = e.target.result;
+                    video.controls = true;
+                    preview.appendChild(video);
                 }
-            } else if (tempStatusFile) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    localStorage.setItem('daily_status', e.target.result);
-                    localStorage.setItem('daily_status_type', currentStatusType);
-                    localStorage.setItem('daily_status_time', Date.now());
-                    appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة ${currentStatusType === 'image' ? 'صورة' : 'فيديو'} للحالة اليومية`, true);
-                };
-                reader.readAsDataURL(tempStatusFile);
-            }
+            };
+            reader.readAsDataURL(file);
         }
+    }
 
-        // ============ الموسيقى ============
-        function toggleMusic() {
-            musicPlaying = !musicPlaying;
-            const btn = document.getElementById('musicBtn');
-            if (musicPlaying) { btn.textContent = '⏸️ إيقاف مؤقت'; btn.classList.add('playing'); } 
-            else { btn.textContent = '🎵 تشغيل موسيقى'; btn.classList.remove('playing'); }
-        }
-        function changeMusicTrack() {
-            currentMusicTrack = (currentMusicTrack + 1) % musicTracks.length;
-            if (musicPlaying) {
-                appendMessage("🎵 موسيقى", currentUser.avatar, `تغيير المقطوعة إلى: ${musicTracks[currentMusicTrack].name}`, true);
+    function addDailyStatus() {
+        if (currentStatusType === 'text') {
+            const statusInput = document.getElementById('dailyStatusInput');
+            const status = statusInput.value.trim();
+            if (status) {
+                localStorage.setItem('daily_status', status);
+                localStorage.setItem('daily_status_type', 'text');
+                localStorage.setItem('daily_status_time', Date.now());
+                statusInput.value = '';
+                appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة الحالة: "${status}"`, true);
             }
+        } else if (tempStatusFile) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                localStorage.setItem('daily_status', e.target.result);
+                localStorage.setItem('daily_status_type', currentStatusType);
+                localStorage.setItem('daily_status_time', Date.now());
+                appendMessage("📝 حالة يومية", currentUser.avatar, `تمت إضافة ${currentStatusType === 'image' ? 'صورة' : 'فيديو'} للحالة اليومية`, true);
+            };
+            reader.readAsDataURL(tempStatusFile);
         }
-        function stopMusic() {
-            musicPlaying = false;
-            document.getElementById('musicBtn').textContent = '🎵 تشغيل موسيقى';
-            document.getElementById('musicBtn').classList.remove('playing');
-        }
+    }
 
-        // ============ التنقل السفلي ============
-        function bottomNavAction(action) {
-            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.closest('.nav-tab-btn').classList.add('active');
-            if (action === 'options') {
-                showUserProfile(currentUser.name, currentUser.avatar, true);
-            } else if (action === 'online') {
-                let userList = "المتصلون الآن:\n";
-                onlineUsers.forEach(user => { userList += `${user.rank} ${user.name} 🟢\n`; });
-                appendMessage("👥 المتصلين", "17.gif", userList, true);
-            } else if (action === 'home') {
-                appendMessage("🏠 النظام", "17.gif", "أهلاً بك في الرئيسية!", true);
-            }
+    // ============ الموسيقى ============
+    function toggleMusic() {
+        musicPlaying = !musicPlaying;
+        const btn = document.getElementById('musicBtn');
+        if (musicPlaying) { btn.textContent = '⏸️ إيقاف مؤقت'; btn.classList.add('playing'); } 
+        else { btn.textContent = '🎵 تشغيل موسيقى'; btn.classList.remove('playing'); }
+    }
+    function changeMusicTrack() {
+        currentMusicTrack = (currentMusicTrack + 1) % musicTracks.length;
+        if (musicPlaying) {
+            appendMessage("🎵 موسيقى", currentUser.avatar, `تغيير المقطوعة إلى: ${musicTracks[currentMusicTrack].name}`, true);
         }
+    }
+    function stopMusic() {
+        musicPlaying = false;
+        document.getElementById('musicBtn').textContent = '🎵 تشغيل موسيقى';
+        document.getElementById('musicBtn').classList.remove('playing');
+    }
 
-        // ============ تحميل البيانات ============
-        function loadSavedData() {
-            const savedName = localStorage.getItem('user_name');
-            if (savedName) currentUser.name = savedName;
-            const savedAvatar = localStorage.getItem('user_avatar');
-            if (savedAvatar) { currentUser.avatar = savedAvatar; tempAvatar = savedAvatar; }
-            const savedCover = localStorage.getItem('user_cover');
-            if (savedCover) { currentUser.cover = savedCover; tempCover = savedCover; }
-            const savedNameGif = localStorage.getItem('user_name_gif');
-            if (savedNameGif) {
-                currentUser.nameGif = savedNameGif;
-                const nameElement = document.getElementById('pModalName');
-                if (nameElement) {
-                    nameElement.innerHTML = `${currentUser.name} <img src="${savedNameGif}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
-                }
+    // ============ التنقل السفلي ============
+    function bottomNavAction(action) {
+        document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.nav-tab-btn').classList.add('active');
+        if (action === 'options') {
+            showUserProfile(currentUser.name, currentUser.avatar, true);
+        } else if (action === 'online') {
+            let userList = "المتصلون الآن:\n";
+            onlineUsers.forEach(user => { userList += `${user.rank} ${user.name} 🟢\n`; });
+            appendMessage("👥 المتصلين", "17.gif", userList, true);
+        } else if (action === 'home') {
+            appendMessage("🏠 النظام", "17.gif", "أهلاً بك في الرئيسية!", true);
+        }
+    }
+
+    // ============ تحميل البيانات ============
+    function loadSavedData() {
+        const savedName = localStorage.getItem('user_name');
+        if (savedName) currentUser.name = savedName;
+        const savedAvatar = localStorage.getItem('user_avatar');
+        if (savedAvatar) { currentUser.avatar = savedAvatar; tempAvatar = savedAvatar; }
+        const savedCover = localStorage.getItem('user_cover');
+        if (savedCover) { currentUser.cover = savedCover; tempCover = savedCover; }
+        const savedNameGif = localStorage.getItem('user_name_gif');
+        if (savedNameGif) {
+            currentUser.nameGif = savedNameGif;
+            const nameElement = document.getElementById('pModalName');
+            if (nameElement) {
+                nameElement.innerHTML = `${currentUser.name} <img src="${savedNameGif}" style="width: 30px; height: 30px; vertical-align: middle; border-radius: 50%;">`;
             }
         }
-    </script>
+    }
+</script>
 </body>
 </html>
