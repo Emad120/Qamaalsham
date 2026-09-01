@@ -54,13 +54,33 @@
 
         #chatArea { flex: 1; display: flex; flex-direction: column; position: relative; background: linear-gradient(rgba(10,15,30,0.7), rgba(10,15,30,0.8)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop') center/cover; }
 
-        .mics-bar { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; }
+        .mics-bar { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.1); }
         .mics-bar.hidden { display: none; }
         .mic-slot { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; overflow: hidden; }
         .mic-slot.occupied { background: linear-gradient(135deg, var(--gold), #b45309); }
         .mic-slot.occupied img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .mics-toggle-arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid var(--gold); color: var(--gold); width: 30px; height: 20px; border-radius: 0 0 15px 15px; cursor: pointer; font-size: 0.7rem; z-index: 5; }
-        .mics-toggle-arrow.hidden { bottom: auto; top: 0; border-radius: 15px 15px 0 0; }
+
+        .mics-toggle-wrapper { position: relative; }
+        .mics-toggle-arrow {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            width: 30px;
+            height: 20px;
+            border-radius: 0 0 15px 15px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            z-index: 6;
+        }
+        .mics-toggle-arrow.hidden {
+            bottom: auto;
+            top: -15px;
+            border-radius: 15px 15px 0 0;
+        }
 
         #messagesContainer { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         .msg-row { display: flex; gap: 8px; align-items: flex-start; word-break: break-word; position: relative; }
@@ -75,9 +95,25 @@
         .msg-options-menu.show { display: block; }
         .msg-option-item { padding: 6px 10px; cursor: pointer; color: var(--text); font-size: 0.8rem; border-radius: 4px; }
         .msg-option-item:hover { background: rgba(255,255,255,0.1); }
-        .reaction-bar { display: flex; gap: 4px; margin-top: 5px; }
-        .reaction-pill { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; }
         .reply-indicator { background: rgba(0,0,0,0.3); border-right: 3px solid var(--gold); padding: 5px; margin-bottom: 5px; border-radius: 4px; font-size: 0.7rem; color: #d1d5db; }
+
+        .dice-msg {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px 15px;
+            animation: diceRoll 0.8s ease-out;
+        }
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.3); }
+            50% { transform: rotate(180deg) scale(0.8); }
+            75% { transform: rotate(270deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
 
         #inputBar { padding: 10px; background: rgba(0,0,0,0.8); border-top: 1px solid rgba(255,255,255,0.1); position: relative; }
         #emojiBar { display: none; gap: 8px; padding: 8px; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 8px; overflow-x: auto; }
@@ -114,9 +150,9 @@
     </style>
 </head>
 <body onclick="closeAllPopups(event)"><header>
-    <button class="toggle-btn" onclick="toggleSidebar('right')">📂 الرومات</button>
+    <button class="toggle-btn" onclick="toggleSidebar(event, 'right')">📂 الرومات</button>
     <div id="headerTitle">قمر الشام - الروم العام</div>
-    <button class="toggle-btn" onclick="toggleSidebar('left')">👑 الرتب</button>
+    <button class="toggle-btn" onclick="toggleSidebar(event, 'left')">👑 الرتب</button>
 </header>
 
 <div class="main-container">
@@ -140,11 +176,13 @@
     </aside>
 
     <div id="chatArea">
-        <div class="mics-bar" id="micsBar">
-            <div class="mic-slot" onclick="requestMicToggle(0)" id="mic0">🎤</div>
-            <div class="mic-slot" onclick="requestMicToggle(1)" id="mic1">🎤</div>
-            <div class="mic-slot" onclick="requestMicToggle(2)" id="mic2">🎤</div>
-            <div class="mic-slot" onclick="requestMicToggle(3)" id="mic3">🎤</div>
+        <div class="mics-toggle-wrapper">
+            <div class="mics-bar" id="micsBar">
+                <div class="mic-slot" onclick="requestMicToggle(0)" id="mic0">🎤</div>
+                <div class="mic-slot" onclick="requestMicToggle(1)" id="mic1">🎤</div>
+                <div class="mic-slot" onclick="requestMicToggle(2)" id="mic2">🎤</div>
+                <div class="mic-slot" onclick="requestMicToggle(3)" id="mic3">🎤</div>
+            </div>
             <button class="mics-toggle-arrow" id="micsArrow" onclick="toggleMicsBar()">▼</button>
         </div>
 
@@ -159,9 +197,9 @@
                 <input type="file" id="userFileInput" accept="image/*,video/*,audio/*,.gif" style="display:none" onchange="handleUserFile(event)">
             </div>
             <div class="input-row">
-                <button class="icon-btn" onclick="toggleEmojiBar()">😊</button>
+                <button class="icon-btn" onclick="toggleEmojiBar(event)">😊</button>
                 <input type="text" id="messageInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()" />
-                <button class="icon-btn" onclick="togglePlusMenu()">+</button>
+                <button class="icon-btn" onclick="togglePlusMenu(event)">+</button>
                 <button id="sendBtn" onclick="sendMessage()">إرسال</button>
             </div>
             <div id="plusMenu">
@@ -395,8 +433,15 @@ function occupyMic(index, user) {
 }
 function toggleMicsBar() {
     const bar = document.getElementById('micsBar');
+    const arrow = document.getElementById('micsArrow');
     bar.classList.toggle('hidden');
-    document.getElementById('micsArrow').textContent = bar.classList.contains('hidden') ? '▲' : '▼';
+    if (bar.classList.contains('hidden')) {
+        arrow.textContent = '▲';
+        arrow.classList.add('hidden');
+    } else {
+        arrow.textContent = '▼';
+        arrow.classList.remove('hidden');
+    }
 }
 
 // ====== الرومات ======
@@ -416,7 +461,8 @@ function switchRoom(roomName, element) {
     closeAllPopups();
 }
 
-function toggleSidebar(side) {
+function toggleSidebar(event, side) {
+    event.stopPropagation();
     const right = document.getElementById('rightAside');
     const left = document.getElementById('leftAside');
     if (side === 'right') {
@@ -438,7 +484,8 @@ function closeAllPopups(event) {
 }
 
 // ====== شريط الإيموجي ======
-function toggleEmojiBar() {
+function toggleEmojiBar(event) {
+    event.stopPropagation();
     document.getElementById('emojiBar').classList.toggle('show');
     document.getElementById('plusMenu').classList.remove('show');
 }
@@ -463,14 +510,32 @@ function handleUserFile(event) {
 }
 
 // ====== قائمة + ======
-function togglePlusMenu() {
+function togglePlusMenu(event) {
+    event.stopPropagation();
     document.getElementById('plusMenu').classList.toggle('show');
     document.getElementById('emojiBar').classList.remove('show');
 }
 function rollDice() {
     const num = Math.floor(Math.random() * 6) + 1;
     const diceEmojis = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-    addMessage('🎲 نرد', currentUser.avatar, `${diceEmojis[num-1]} (${num})`, false);
+    const container = document.getElementById('messagesContainer');
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `
+        <img src="${currentUser.avatar}" class="msg-avatar">
+        <div class="msg-content">
+            <div class="msg-name">${currentUser.name}</div>
+            <div class="dice-msg">${diceEmojis[num-1]} <span style="font-size:1rem;">(${num})</span></div>
+        </div>`;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+    
+    try {
+        const audio = new Audio('dice-sound.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+    } catch(e) {}
+    
     closeAllPopups();
 }
 function openMediaModal() {
