@@ -324,28 +324,39 @@ function sendMessage() {
     const stickers = [...selectedStickers];
     if (!msg && stickers.length === 0) return;
 
-    addMessage(currentUser.name, currentUser.avatar, msg, false, stickers, { font: selectedFontStyle });
-
-    if (msg) {
-        if (currentRoom === 'خاص' && (msg.includes('بوت تعلم') || msg.includes('البوت تعلم'))) {
-            learnBot(msg);
-        } else if (msg.includes('بوت') || msg.includes('بووت') || msg.includes('البوت') || msg.includes('البووت')) {
-            const reply = findAnswer(msg);
-            if (reply) setTimeout(() => addMessage('🤖 بوت', '17.gif', reply, true), 500);
-        }
+function addMessage(sender, avatar, text, isBot = false, stickers = [], options = {}) {
+    const container = document.getElementById('messagesContainer');
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    
+    let borderStyle = '';
+    if (options.font && options.font.border) {
+        borderStyle = `border:2px solid ${options.font.color};border-radius:6px;padding:4px 8px;`;
     }
-
-    input.value = '';
-    selectedStickers = [];
-}
-
-function findAnswer(msg) {
-    const lower = msg.toLowerCase().trim();
-    for (let key in botMemory) {
-        if (lower.includes(key.toLowerCase())) return botMemory[key];
+    
+    row.innerHTML = `<img src="${avatar}" class="msg-avatar" onclick="showUserProfile('${sender}', '${avatar}')">
+        <div class="msg-content">
+            <div class="msg-name">${sender}</div>
+            ${options.replyTo ? `<div class="reply-indicator">رداً على ${options.replyTo}</div>` : ''}
+            <div class="msg-text ${isBot ? 'bot-msg-text' : ''}" style="font-family:${options.font ? options.font.family : 'inherit'};font-size:${options.font ? options.font.size : 16}px;color:${options.font ? options.font.color : '#fff'};${borderStyle}">${text || ''}</div>
+        </div>
+        <button class="msg-options-btn" onclick="toggleMsgOptions(event)">⋯</button>`;
+    
+    if (stickers.length > 0) {
+        const stickerDiv = document.createElement('div');
+        stickerDiv.style.display = 'flex';
+        stickerDiv.style.gap = '5px';
+        stickerDiv.style.marginTop = '5px';
+        stickers.forEach(s => {
+            const img = document.createElement('img');
+            img.src = s;
+            img.className = 'msg-sticker';
+            stickerDiv.appendChild(img);
+        });
+        row.querySelector('.msg-content').appendChild(stickerDiv);
     }
-    if (currentRoom === 'خاص') return 'ما تعلمت هذا بعد!\nبوت تعلم: السؤال = الجواب';
-    return null;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
 }
 
 function learnBot(message) {
