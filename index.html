@@ -100,12 +100,17 @@
         .dice-msg {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            font-size: 2rem;
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 10px 15px;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             animation: diceRoll 0.8s ease-out;
+        }
+        .dice-msg span {
+            font-size: 2rem;
+            color: #111;
         }
         @keyframes diceRoll {
             0% { transform: rotate(0deg) scale(1); }
@@ -303,7 +308,7 @@ function addMessage(sender, avatar, text, isBot = false, stickers = [], options 
             ${options.replyTo ? `<div class="reply-indicator">رداً على ${options.replyTo}</div>` : ''}
             <div class="msg-text ${isBot ? 'bot-msg-text' : ''}" style="font-family:${options.font ? options.font.family : 'inherit'};font-size:${options.font ? options.font.size : 16}px;color:${options.font ? options.font.color : '#fff'};${borderStyle}">${text || ''}</div>
         </div>
-        <button class="msg-options-btn" onclick="toggleMsgOptions(event)">⋯</button>`;
+        <button class="msg-options-btn" onclick="toggleMsgOptions(event, this)">⋯</button>`;
     if (stickers.length > 0) {
         const stickerDiv = document.createElement('div');
         stickerDiv.style.display = 'flex';
@@ -319,21 +324,21 @@ function addMessage(sender, avatar, text, isBot = false, stickers = [], options 
     }
     container.appendChild(row);
     container.scrollTop = container.scrollHeight;
+    return row;
 }
 
-function toggleMsgOptions(event) {
+function toggleMsgOptions(event, btn) {
     event.stopPropagation();
     closeAllMsgMenus();
-    const btn = event.currentTarget;
     const menu = document.createElement('div');
     menu.className = 'msg-options-menu show';
     menu.innerHTML = `
-        <div class="msg-option-item" onclick="reactToMessage('👍')">👍 تفاعل</div>
-        <div class="msg-option-item" onclick="reactToMessage('😂')">😂 تفاعل</div>
-        <div class="msg-option-item" onclick="reactToMessage('❤️')">❤️ تفاعل</div>
-        <div class="msg-option-item" onclick="replyToMessage()">↩️ رد</div>
-        <div class="msg-option-item" onclick="removeMsgLocally()">👁️ إزالة</div>
-        <div class="msg-option-item" onclick="deleteMsg()">🗑️ حذف</div>`;
+        <div class="msg-option-item" onclick="reactToMessage(this, '👍')">👍 تفاعل</div>
+        <div class="msg-option-item" onclick="reactToMessage(this, '😂')">😂 تفاعل</div>
+        <div class="msg-option-item" onclick="reactToMessage(this, '❤️')">❤️ تفاعل</div>
+        <div class="msg-option-item" onclick="replyToMessage(this)">↩️ رد</div>
+        <div class="msg-option-item" onclick="removeMsgLocally(this)">👁️ إزالة</div>
+        <div class="msg-option-item" onclick="deleteMsg(this)">🗑️ حذف</div>`;
     btn.parentNode.appendChild(menu);
 }
 
@@ -341,24 +346,35 @@ function closeAllMsgMenus() {
     document.querySelectorAll('.msg-options-menu').forEach(m => m.remove());
 }
 
-function reactToMessage(emoji) {
+function reactToMessage(el, emoji) {
+    const row = el.closest('.msg-row');
+    const content = row.querySelector('.msg-content');
+    let reactionBar = content.querySelector('.reaction-bar');
+    if (!reactionBar) {
+        reactionBar = document.createElement('div');
+        reactionBar.className = 'reaction-bar';
+        content.appendChild(reactionBar);
+    }
+    const pill = document.createElement('span');
+    pill.className = 'reaction-pill';
+    pill.textContent = emoji;
+    reactionBar.appendChild(pill);
     closeAllMsgMenus();
-    alert(`تفاعلت بـ ${emoji}`);
 }
-function replyToMessage() {
+function replyToMessage(el) {
     closeAllMsgMenus();
     const reply = prompt('اكتب ردك:');
     if (reply) {
         addMessage(currentUser.name, currentUser.avatar, reply, false, [], { replyTo: 'الرسالة الأصلية' });
     }
 }
-function removeMsgLocally() {
+function removeMsgLocally(el) {
     closeAllMsgMenus();
-    event.target.closest('.msg-row').style.display = 'none';
+    el.closest('.msg-row').style.display = 'none';
 }
-function deleteMsg() {
+function deleteMsg(el) {
     closeAllMsgMenus();
-    event.target.closest('.msg-row').remove();
+    el.closest('.msg-row').remove();
 }
 
 function sendMessage() {
@@ -500,9 +516,18 @@ function handleUserFile(event) {
         const reader = new FileReader();
         reader.onload = e => {
             let saved = JSON.parse(localStorage.getItem('saved_files') || '[]');
-            saved.push({ name: file.name, data: e.target.result });
+            saved.push({ name: file.name, data: e.target.result, type: file.type });
             localStorage.setItem('saved_files', JSON.stringify(saved));
-            document.getElementById('fileSlot').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+            const fileSlot = document.getElementById('fileSlot');
+            if (file.type.startsWith('image/')) {
+                fileSlot.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+            } else if (file.type.startsWith('video/')) {
+                fileSlot.innerHTML = '🎬';
+            } else if (file.type.startsWith('audio/')) {
+                fileSlot.innerHTML = '🎵';
+            } else {
+                fileSlot.innerHTML = '📁';
+            }
             selectedStickers.push(e.target.result);
         };
         reader.readAsDataURL(file);
@@ -517,7 +542,6 @@ function togglePlusMenu(event) {
 }
 function rollDice() {
     const num = Math.floor(Math.random() * 6) + 1;
-    const diceEmojis = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
     const container = document.getElementById('messagesContainer');
     const row = document.createElement('div');
     row.className = 'msg-row';
@@ -525,17 +549,15 @@ function rollDice() {
         <img src="${currentUser.avatar}" class="msg-avatar">
         <div class="msg-content">
             <div class="msg-name">${currentUser.name}</div>
-            <div class="dice-msg">${diceEmojis[num-1]} <span style="font-size:1rem;">(${num})</span></div>
+            <div class="dice-msg"><span>${num}</span></div>
         </div>`;
     container.appendChild(row);
     container.scrollTop = container.scrollHeight;
-    
     try {
         const audio = new Audio('dice-sound.mp3');
         audio.volume = 0.5;
         audio.play().catch(() => {});
     } catch(e) {}
-    
     closeAllPopups();
 }
 function openMediaModal() {
@@ -550,9 +572,9 @@ function searchYoutube() {
     const q = document.getElementById('youtubeSearchInput').value.trim();
     if (!q) return;
     const results = [
-        { title: `${q} - فيديو 1`, channel: 'قناة 1', thumb: 'https://via.placeholder.com/70x50' },
-        { title: `${q} - فيديو 2`, channel: 'قناة 2', thumb: 'https://via.placeholder.com/70x50' },
-        { title: `${q} - فيديو 3`, channel: 'قناة 3', thumb: 'https://via.placeholder.com/70x50' }
+        { title: `${q} - فيديو 1`, channel: 'قناة 1', thumb: 'https://via.placeholder.com/70x50', videoId: 'VIDEO_ID_1' },
+        { title: `${q} - فيديو 2`, channel: 'قناة 2', thumb: 'https://via.placeholder.com/70x50', videoId: 'VIDEO_ID_2' },
+        { title: `${q} - فيديو 3`, channel: 'قناة 3', thumb: 'https://via.placeholder.com/70x50', videoId: 'VIDEO_ID_3' }
     ];
     const container = document.getElementById('youtubeResults');
     container.innerHTML = '';
@@ -560,7 +582,10 @@ function searchYoutube() {
         const div = document.createElement('div');
         div.className = 'youtube-result';
         div.innerHTML = `<img src="${v.thumb}"><div><div>${v.title}</div><div style="color:#9ca3af;font-size:0.7rem;">${v.channel}</div></div>`;
-        div.onclick = () => { addMessage(currentUser.name, currentUser.avatar, `🎥 ${v.title}`, false); closeYoutubeModal(); };
+        div.onclick = () => {
+            addMessage(currentUser.name, currentUser.avatar, `🎥 ${v.title}`, false, [], { video: v });
+            closeYoutubeModal();
+        };
         container.appendChild(div);
     });
 }
