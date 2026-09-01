@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>شات قمر الشام</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Amiri&family=Reem+Kufi&family=Marhey&display=swap" rel="stylesheet">
     <style>
         :root {
             --gold: #d97706;
@@ -18,7 +19,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { background: #0c0814; color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* الهيدر */
         header {
             background: linear-gradient(135deg, #1f2937, #111827);
             border-bottom: 2px solid var(--gold);
@@ -31,10 +31,8 @@
         #headerTitle { font-weight: bold; font-size: 1.1rem; background: linear-gradient(135deg, var(--gold), #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .toggle-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
 
-        /* الحاوية الرئيسية */
         .main-container { display: flex; flex: 1; position: relative; overflow: hidden; }
 
-        /* القوائم الجانبية */
         aside {
             width: 30%; max-width: 250px; min-width: 180px;
             background: linear-gradient(180deg, #1f2937, #111827);
@@ -42,38 +40,45 @@
             transition: transform 0.3s;
             position: absolute; top: 0; bottom: 0;
             z-index: 20; overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         #rightAside { right: 0; transform: translateX(100%); border-left: 2px solid var(--gold); }
         #rightAside.active { transform: translateX(0); }
         #leftAside { left: 0; transform: translateX(-100%); border-right: 2px solid var(--gold); }
         #leftAside.active { transform: translateX(0); }
         .aside-header { padding: 14px; font-weight: bold; color: var(--gold); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .room-item, .rank-item { padding: 12px 14px; cursor: pointer; color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .room-item, .rank-item { padding: 12px 14px; cursor: pointer; color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: background 0.2s; }
+        .room-item:hover, .rank-item:hover { background: rgba(217,119,6,0.1); }
         .room-item.active { background: rgba(217,119,6,0.3); color: var(--gold); font-weight: bold; }
         .room-badge { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-right: auto; }
 
-        /* منطقة المحادثة */
         #chatArea { flex: 1; display: flex; flex-direction: column; position: relative; background: linear-gradient(rgba(10,15,30,0.7), rgba(10,15,30,0.8)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop') center/cover; }
 
-        /* شريط المايكات */
         .mics-bar { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; }
         .mics-bar.hidden { display: none; }
-        .mic-slot { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; }
+        .mic-slot { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; overflow: hidden; }
         .mic-slot.occupied { background: linear-gradient(135deg, var(--gold), #b45309); }
         .mic-slot.occupied img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .mics-toggle-arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid var(--gold); color: var(--gold); width: 30px; height: 20px; border-radius: 0 0 15px 15px; cursor: pointer; font-size: 0.7rem; }
+        .mics-toggle-arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid var(--gold); color: var(--gold); width: 30px; height: 20px; border-radius: 0 0 15px 15px; cursor: pointer; font-size: 0.7rem; z-index: 5; }
+        .mics-toggle-arrow.hidden { bottom: auto; top: 0; border-radius: 15px 15px 0 0; }
 
-        /* الرسائل */
         #messagesContainer { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .msg-row { display: flex; gap: 8px; align-items: flex-start; word-break: break-word; }
-        .msg-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; flex-shrink: 0; }
-        .msg-content { max-width: calc(100% - 43px); }
+        .msg-row { display: flex; gap: 8px; align-items: flex-start; word-break: break-word; position: relative; }
+        .msg-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; flex-shrink: 0; cursor: pointer; }
+        .msg-content { max-width: calc(100% - 43px); flex: 1; }
         .msg-name { font-size: 0.75rem; font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; width: fit-content; cursor: pointer; }
-        .msg-text { font-size: 1rem; color: #fff; padding: 4px 0; white-space: pre-wrap; }
+        .msg-text { font-size: 1rem; color: #fff; padding: 4px 0; white-space: pre-wrap; word-break: break-word; }
         .bot-msg-text { color: #fde047; }
         .msg-sticker { width: 60px; height: 60px; object-fit: contain; }
+        .msg-options-btn { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 1.2rem; padding: 0 5px; align-self: center; }
+        .msg-options-menu { display: none; position: absolute; background: #1f2937; border: 1px solid var(--gold); border-radius: 6px; padding: 5px; z-index: 50; min-width: 120px; }
+        .msg-options-menu.show { display: block; }
+        .msg-option-item { padding: 6px 10px; cursor: pointer; color: var(--text); font-size: 0.8rem; border-radius: 4px; }
+        .msg-option-item:hover { background: rgba(255,255,255,0.1); }
+        .reaction-bar { display: flex; gap: 4px; margin-top: 5px; }
+        .reaction-pill { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; }
+        .reply-indicator { background: rgba(0,0,0,0.3); border-right: 3px solid var(--gold); padding: 5px; margin-bottom: 5px; border-radius: 4px; font-size: 0.7rem; color: #d1d5db; }
 
-        /* شريط الإدخال */
         #inputBar { padding: 10px; background: rgba(0,0,0,0.8); border-top: 1px solid rgba(255,255,255,0.1); position: relative; }
         #emojiBar { display: none; gap: 8px; padding: 8px; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 8px; overflow-x: auto; }
         #emojiBar.show { display: flex; }
@@ -85,36 +90,29 @@
         #messageInput { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px; color: #fff; outline: none; font-size: 0.95rem; }
         #sendBtn { background: linear-gradient(135deg, var(--gold), #b45309); border: none; border-radius: 8px; color: #fff; font-weight: bold; padding: 0 18px; height: 40px; cursor: pointer; }
 
-        /* قائمة + */
         #plusMenu { display: none; position: absolute; bottom: 60px; left: 10px; background: #1f2937; border: 1px solid var(--gold); border-radius: 8px; padding: 5px; z-index: 50; flex-direction: column; gap: 4px; }
         #plusMenu.show { display: flex; }
         .plus-item { background: none; border: none; color: #fff; padding: 8px 12px; border-radius: 5px; cursor: pointer; text-align: right; font-size: 0.85rem; }
         .plus-item:hover { background: rgba(255,255,255,0.1); }
 
-        /* نافذة عامة */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; padding: 15px; }
         .modal-overlay.show { display: flex; }
         .modal-box { background: #1f2937; border: 2px solid var(--gold); border-radius: 12px; padding: 15px; width: 100%; max-width: 350px; max-height: 80vh; overflow-y: auto; }
-
-        /* ذاكرة البوت */
         .memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 0.8rem; }
         .delete-btn { background: var(--red); border: none; color: #fff; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
-
-        /* نافذة يوتيوب والخط */
         .youtube-result { display: flex; gap: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
         .youtube-result img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
         .font-preview { padding: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; text-align: center; margin-bottom: 10px; }
-        .font-select, .color-picker { margin-bottom: 10px; }
-        .size-slider { width: 100%; margin-bottom: 10px; }
+        .font-select, .size-slider { width: 100%; margin-bottom: 10px; }
+        .color-option { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+        .color-option.selected { border-color: var(--gold); }
 
-        /* شريط التنقل السفلي */
         #bottomNav { height: 55px; background: #111827; border-top: 2px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
         .nav-btn { background: none; border: none; color: var(--muted); font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
         .nav-btn.active { color: var(--gold); }
         .nav-icon { font-size: 1.4rem; }
     </style>
-</head>
-<body onclick="closeAllPopups(event)"><header>
+</head><header>
     <button class="toggle-btn" onclick="toggleSidebar('right')">📂 الرومات</button>
     <div id="headerTitle">قمر الشام - الروم العام</div>
     <button class="toggle-btn" onclick="toggleSidebar('left')">👑 الرتب</button>
@@ -153,9 +151,9 @@
 
         <div id="inputBar" onclick="event.stopPropagation()">
             <div id="emojiBar">
-                <div class="emoji-slot" onclick="insertEmoji('1.gif')"><img src="1.gif" alt="1"></div>
-                <div class="emoji-slot" onclick="insertEmoji('2.gif')"><img src="2.gif" alt="2"></div>
-                <div class="emoji-slot" onclick="insertEmoji('3.gif')"><img src="3.gif" alt="3"></div>
+                <div class="emoji-slot" onclick="insertEmojiToInput('1.gif')"><img src="1.gif" alt="1"></div>
+                <div class="emoji-slot" onclick="insertEmojiToInput('2.gif')"><img src="2.gif" alt="2"></div>
+                <div class="emoji-slot" onclick="insertEmojiToInput('3.gif')"><img src="3.gif" alt="3"></div>
                 <div class="emoji-slot" id="fileSlot" onclick="document.getElementById('userFileInput').click()">+</div>
                 <input type="file" id="userFileInput" accept="image/*,video/*,audio/*,.gif" style="display:none" onchange="handleUserFile(event)">
             </div>
@@ -213,7 +211,7 @@
             <button class="toggle-btn" onclick="closeFontModal()">✕</button>
         </div>
         <div class="font-preview" id="fontPreview">نص تجريبي</div>
-        <select class="font-select" id="fontFamilySelect" onchange="updateFontPreview()" style="width:100%;padding:8px;border-radius:6px;background:#111;color:#fff;border:1px solid var(--gold);">
+        <select class="font-select" id="fontFamilySelect" onchange="updateFontPreview()" style="padding:8px;border-radius:6px;background:#111;color:#fff;border:1px solid var(--gold);">
             <option value="Cairo">القاهرة</option>
             <option value="Amiri">أميري</option>
             <option value="Reem Kufi">كوفي</option>
@@ -223,31 +221,28 @@
         <input type="range" class="size-slider" id="fontSizeSlider" min="12" max="28" value="16" oninput="updateFontPreview()">
         <label style="font-size:0.8rem;">اللون</label>
         <div id="fontColors" style="display:flex;gap:5px;margin-bottom:10px;">
-            <div class="color-option" style="background:#fff;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#fff', this)"></div>
-            <div class="color-option" style="background:#fde047;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#fde047', this)"></div>
-            <div class="color-option" style="background:#ec4899;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#ec4899', this)"></div>
-            <div class="color-option" style="background:#8b5cf6;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#8b5cf6', this)"></div>
+            <div class="color-option" style="background:#fff;" onclick="selectFontColor('#fff', this)"></div>
+            <div class="color-option" style="background:#fde047;" onclick="selectFontColor('#fde047', this)"></div>
+            <div class="color-option" style="background:#ec4899;" onclick="selectFontColor('#ec4899', this)"></div>
+            <div class="color-option" style="background:#8b5cf6;" onclick="selectFontColor('#8b5cf6', this)"></div>
         </div>
         <button class="toggle-btn" onclick="toggleMessageBorder()" id="borderBtn" style="width:100%;margin-bottom:10px;">تفعيل الإطار</button>
         <button style="width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),#b45309);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;" onclick="applyFontStyle()">تطبيق</button>
     </div>
 </div>
 
-<script>// ====== حالة عامة ======
-let currentRoom = 'عام';
+<script>let currentRoom = 'عام';
 let activeMics = [false, false, false, false];
 let currentUser = { name: 'عماد', avatar: '1.gif' };
 let selectedStickers = [];
 let selectedFontStyle = { family: 'Cairo', size: 16, color: '#fff', border: false };
-
-// ====== بيانات تجريبية ======
+let botMemory = JSON.parse(localStorage.getItem('bot_memory')) || { "شلونك": "تمام 🌙", "ارقص": "💃" };
 const onlineUsers = [
     { name: 'عماد', avatar: '1.gif', rank: 'الملك 👑' },
     { name: 'آيلا', avatar: '1.gif', rank: 'الملكة 💖' },
     { name: 'سامر', avatar: '17.gif', rank: 'VIP ✨' }
 ];
 
-// ====== تهيئة ======
 window.addEventListener('DOMContentLoaded', () => {
     addMessage('🤖 بوت قمر الشام', '17.gif', 'أهلاً بك يا ملك عماد ✨', true);
     occupyMic(0, onlineUsers[2]);
@@ -255,15 +250,17 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ====== الرسائل ======
-function addMessage(sender, avatar, text, isBot = false, stickers = []) {
+function addMessage(sender, avatar, text, isBot = false, stickers = [], options = {}) {
     const container = document.getElementById('messagesContainer');
     const row = document.createElement('div');
     row.className = 'msg-row';
     row.innerHTML = `<img src="${avatar}" class="msg-avatar" onclick="showUserProfile('${sender}', '${avatar}')">
         <div class="msg-content">
             <div class="msg-name">${sender}</div>
-            <div class="msg-text ${isBot ? 'bot-msg-text' : ''}">${text || ''}</div>
-        </div>`;
+            ${options.replyTo ? `<div class="reply-indicator">رداً على ${options.replyTo}</div>` : ''}
+            <div class="msg-text ${isBot ? 'bot-msg-text' : ''}" style="font-family:${options.font ? options.font.family : 'inherit'};font-size:${options.font ? options.font.size : 16}px;color:${options.font ? options.font.color : '#fff'};">${text || ''}</div>
+        </div>
+        <button class="msg-options-btn" onclick="toggleMsgOptions(event)">⋯</button>`;
     if (stickers.length > 0) {
         const stickerDiv = document.createElement('div');
         stickerDiv.style.display = 'flex';
@@ -281,15 +278,54 @@ function addMessage(sender, avatar, text, isBot = false, stickers = []) {
     container.scrollTop = container.scrollHeight;
 }
 
+function toggleMsgOptions(event) {
+    event.stopPropagation();
+    closeAllMsgMenus();
+    const btn = event.currentTarget;
+    const menu = document.createElement('div');
+    menu.className = 'msg-options-menu show';
+    menu.innerHTML = `
+        <div class="msg-option-item" onclick="reactToMessage('👍')">👍 تفاعل</div>
+        <div class="msg-option-item" onclick="reactToMessage('😂')">😂 تفاعل</div>
+        <div class="msg-option-item" onclick="reactToMessage('❤️')">❤️ تفاعل</div>
+        <div class="msg-option-item" onclick="replyToMessage()">↩️ رد</div>
+        <div class="msg-option-item" onclick="removeMsgLocally()">👁️ إزالة</div>
+        <div class="msg-option-item" onclick="deleteMsg()">🗑️ حذف</div>`;
+    btn.parentNode.appendChild(menu);
+}
+
+function closeAllMsgMenus() {
+    document.querySelectorAll('.msg-options-menu').forEach(m => m.remove());
+}
+
+function reactToMessage(emoji) {
+    closeAllMsgMenus();
+    alert(`تفاعلت بـ ${emoji}`);
+}
+function replyToMessage() {
+    closeAllMsgMenus();
+    const reply = prompt('اكتب ردك:');
+    if (reply) {
+        addMessage(currentUser.name, currentUser.avatar, reply, false, [], { replyTo: 'الرسالة الأصلية' });
+    }
+}
+function removeMsgLocally() {
+    closeAllMsgMenus();
+    event.target.closest('.msg-row').style.display = 'none';
+}
+function deleteMsg() {
+    closeAllMsgMenus();
+    event.target.closest('.msg-row').remove();
+}
+
 function sendMessage() {
     const input = document.getElementById('messageInput');
     const msg = input.value.trim();
     const stickers = [...selectedStickers];
     if (!msg && stickers.length === 0) return;
 
-    addMessage(currentUser.name, currentUser.avatar, msg, false, stickers);
+    addMessage(currentUser.name, currentUser.avatar, msg, false, stickers, { font: selectedFontStyle });
 
-    // منطق البوت
     if (msg) {
         if (currentRoom === 'خاص' && (msg.includes('بوت تعلم') || msg.includes('البوت تعلم'))) {
             learnBot(msg);
@@ -301,11 +337,7 @@ function sendMessage() {
 
     input.value = '';
     selectedStickers = [];
-    updatePreviewBar();
 }
-
-// ====== البوت ======
-let botMemory = JSON.parse(localStorage.getItem('bot_memory')) || { "شلونك": "تمام 🌙", "ارقص": "💃" };
 
 function findAnswer(msg) {
     const lower = msg.toLowerCase().trim();
@@ -333,8 +365,7 @@ function learnBot(message) {
 function requestMicToggle(index) {
     const isJoining = !activeMics[index];
     if (confirm(isJoining ? 'الانضمام للمايك؟' : 'الخروج من المايك؟')) {
-        if (isJoining) joinMic(index);
-        else leaveMic(index);
+        isJoining ? joinMic(index) : leaveMic(index);
     }
 }
 function joinMic(index) {
@@ -383,15 +414,22 @@ function switchRoom(roomName, element) {
 function toggleSidebar(side) {
     const right = document.getElementById('rightAside');
     const left = document.getElementById('leftAside');
-    if (side === 'right') { right.classList.toggle('active'); left.classList.remove('active'); }
-    else { left.classList.toggle('active'); right.classList.remove('active'); }
+    if (side === 'right') {
+        right.classList.toggle('active');
+        left.classList.remove('active');
+    } else {
+        left.classList.toggle('active');
+        right.classList.remove('active');
+    }
 }
 
-function closeAllPopups() {
+function closeAllPopups(event) {
+    if (event) event.stopPropagation();
     document.getElementById('rightAside').classList.remove('active');
     document.getElementById('leftAside').classList.remove('active');
     document.getElementById('plusMenu').classList.remove('show');
     document.getElementById('emojiBar').classList.remove('show');
+    closeAllMsgMenus();
 }
 
 // ====== شريط الإيموجي ======
@@ -399,7 +437,7 @@ function toggleEmojiBar() {
     document.getElementById('emojiBar').classList.toggle('show');
     document.getElementById('plusMenu').classList.remove('show');
 }
-function insertEmoji(src) {
+function insertEmojiToInput(src) {
     const input = document.getElementById('messageInput');
     input.value += src + ' ';
     input.focus();
@@ -414,28 +452,10 @@ function handleUserFile(event) {
             localStorage.setItem('saved_files', JSON.stringify(saved));
             document.getElementById('fileSlot').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
             selectedStickers.push(e.target.result);
-            updatePreviewBar();
         };
         reader.readAsDataURL(file);
     }
 }
-function updatePreviewBar() {
-    const bar = document.getElementById('previewBar');
-    if (!bar) return;
-    bar.innerHTML = '';
-    if (selectedStickers.length) {
-        bar.style.display = 'flex';
-        selectedStickers.forEach((s, i) => {
-            const div = document.createElement('div');
-            div.style.position = 'relative';
-            div.innerHTML = `<img src="${s}" style="width:40px;height:40px;object-fit:contain;"><button style="position:absolute;top:-4px;right:-4px;background:red;border:none;color:#fff;border-radius:50%;width:14px;height:14px;font-size:8px;" onclick="removeSticker(${i})">×</button>`;
-            bar.appendChild(div);
-        });
-    } else {
-        bar.style.display = 'none';
-    }
-}
-function removeSticker(i) { selectedStickers.splice(i, 1); updatePreviewBar(); }
 
 // ====== قائمة + ======
 function togglePlusMenu() {
@@ -444,7 +464,8 @@ function togglePlusMenu() {
 }
 function rollDice() {
     const num = Math.floor(Math.random() * 6) + 1;
-    addMessage('🎲', currentUser.avatar, `خرج: ${num}`, false);
+    const diceEmojis = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+    addMessage('🎲 نرد', currentUser.avatar, `${diceEmojis[num-1]} (${num})`, false);
     closeAllPopups();
 }
 function openMediaModal() {
@@ -480,12 +501,13 @@ function closeFontModal() { document.getElementById('fontModal').classList.remov
 function updateFontPreview() {
     const family = document.getElementById('fontFamilySelect').value;
     const size = document.getElementById('fontSizeSlider').value;
-    document.getElementById('fontPreview').style.fontFamily = family;
-    document.getElementById('fontPreview').style.fontSize = size + 'px';
+    const preview = document.getElementById('fontPreview');
+    preview.style.fontFamily = family;
+    preview.style.fontSize = size + 'px';
 }
 function selectFontColor(color, el) {
-    document.querySelectorAll('#fontColors .color-option').forEach(o => o.style.border = 'none');
-    el.style.border = '2px solid var(--gold)';
+    document.querySelectorAll('#fontColors .color-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
     selectedFontStyle.color = color;
 }
 function toggleMessageBorder() {
@@ -546,3 +568,4 @@ function deleteMemoryItem(key) {
     </script>
 </body>
 </html>
+<body onclick="closeAllPopups(event)">
