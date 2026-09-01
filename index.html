@@ -2,175 +2,547 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شات قمر الشام - نسخة أساسية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>شات قمر الشام</title>
     <style>
+        :root {
+            --gold: #d97706;
+            --pink: #ec4899;
+            --dark: #111827;
+            --darker: #1f2937;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --green: #10b981;
+            --red: #ef4444;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-        body { background: #120c1f; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { background: #1f2937; padding: 10px; text-align: center; border-bottom: 2px solid #d97706; display: flex; justify-content: space-between; align-items: center; }
-        #roomTitle { color: #d97706; font-weight: bold; }
-        #memoryBtn { background: #374151; color: #fff; border: 1px solid #d97706; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 0.8rem; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { background: rgba(255,255,255,0.08); padding: 10px; border-radius: 8px; word-break: break-word; }
-        .bot { background: rgba(217,119,6,0.2); border-right: 3px solid #d97706; }
-        .user { background: rgba(255,255,255,0.05); }
-        .input-bar { display: flex; gap: 8px; padding: 10px; background: #1f2937; border-top: 2px solid #d97706; }
-        #messageInput { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #d97706; background: #111827; color: #fff; outline: none; }
-        button { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #sendBtn { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
-        #roomToggle { background: #374151; color: #fff; }
-        .info { text-align: center; color: #9ca3af; font-size: 0.8rem; }
+        body { background: #0c0814; color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* نافذة الذاكرة */
-        .memory-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; padding: 20px; }
-        .memory-overlay.show { display: flex; }
-        .memory-box { background: #1f2937; border: 2px solid #d97706; border-radius: 12px; padding: 15px; width: 100%; max-width: 350px; max-height: 70vh; display: flex; flex-direction: column; }
-        .memory-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .memory-header h3 { color: #d97706; font-size: 1rem; }
-        #closeMemoryBtn { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
-        #memoryList { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        .memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; font-size: 0.8rem; }
-        .memory-item span { flex: 1; word-break: break-word; }
-        .delete-btn { background: #ef4444; color: #fff; border: none; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 0.7rem; }
+        /* الهيدر */
+        header {
+            background: linear-gradient(135deg, #1f2937, #111827);
+            border-bottom: 2px solid var(--gold);
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        #headerTitle { font-weight: bold; font-size: 1.1rem; background: linear-gradient(135deg, var(--gold), #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .toggle-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+
+        /* الحاوية الرئيسية */
+        .main-container { display: flex; flex: 1; position: relative; overflow: hidden; }
+
+        /* القوائم الجانبية */
+        aside {
+            width: 30%; max-width: 250px; min-width: 180px;
+            background: linear-gradient(180deg, #1f2937, #111827);
+            display: flex; flex-direction: column;
+            transition: transform 0.3s;
+            position: absolute; top: 0; bottom: 0;
+            z-index: 20; overflow-y: auto;
+        }
+        #rightAside { right: 0; transform: translateX(100%); border-left: 2px solid var(--gold); }
+        #rightAside.active { transform: translateX(0); }
+        #leftAside { left: 0; transform: translateX(-100%); border-right: 2px solid var(--gold); }
+        #leftAside.active { transform: translateX(0); }
+        .aside-header { padding: 14px; font-weight: bold; color: var(--gold); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .room-item, .rank-item { padding: 12px 14px; cursor: pointer; color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .room-item.active { background: rgba(217,119,6,0.3); color: var(--gold); font-weight: bold; }
+        .room-badge { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-right: auto; }
+
+        /* منطقة المحادثة */
+        #chatArea { flex: 1; display: flex; flex-direction: column; position: relative; background: linear-gradient(rgba(10,15,30,0.7), rgba(10,15,30,0.8)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop') center/cover; }
+
+        /* شريط المايكات */
+        .mics-bar { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; }
+        .mics-bar.hidden { display: none; }
+        .mic-slot { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; }
+        .mic-slot.occupied { background: linear-gradient(135deg, var(--gold), #b45309); }
+        .mic-slot.occupied img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .mics-toggle-arrow { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); border: 1px solid var(--gold); color: var(--gold); width: 30px; height: 20px; border-radius: 0 0 15px 15px; cursor: pointer; font-size: 0.7rem; }
+
+        /* الرسائل */
+        #messagesContainer { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .msg-row { display: flex; gap: 8px; align-items: flex-start; word-break: break-word; }
+        .msg-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; flex-shrink: 0; }
+        .msg-content { max-width: calc(100% - 43px); }
+        .msg-name { font-size: 0.75rem; font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; width: fit-content; cursor: pointer; }
+        .msg-text { font-size: 1rem; color: #fff; padding: 4px 0; white-space: pre-wrap; }
+        .bot-msg-text { color: #fde047; }
+        .msg-sticker { width: 60px; height: 60px; object-fit: contain; }
+
+        /* شريط الإدخال */
+        #inputBar { padding: 10px; background: rgba(0,0,0,0.8); border-top: 1px solid rgba(255,255,255,0.1); position: relative; }
+        #emojiBar { display: none; gap: 8px; padding: 8px; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 8px; overflow-x: auto; }
+        #emojiBar.show { display: flex; }
+        .emoji-slot { width: 50px; height: 50px; border-radius: 8px; background: rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+        .emoji-slot img { width: 40px; height: 40px; object-fit: contain; }
+        #fileSlot { border: 1px dashed var(--gold); color: var(--gold); font-size: 1.5rem; }
+        .input-row { display: flex; gap: 8px; align-items: center; }
+        .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--gold); width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; }
+        #messageInput { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px; color: #fff; outline: none; font-size: 0.95rem; }
+        #sendBtn { background: linear-gradient(135deg, var(--gold), #b45309); border: none; border-radius: 8px; color: #fff; font-weight: bold; padding: 0 18px; height: 40px; cursor: pointer; }
+
+        /* قائمة + */
+        #plusMenu { display: none; position: absolute; bottom: 60px; left: 10px; background: #1f2937; border: 1px solid var(--gold); border-radius: 8px; padding: 5px; z-index: 50; flex-direction: column; gap: 4px; }
+        #plusMenu.show { display: flex; }
+        .plus-item { background: none; border: none; color: #fff; padding: 8px 12px; border-radius: 5px; cursor: pointer; text-align: right; font-size: 0.85rem; }
+        .plus-item:hover { background: rgba(255,255,255,0.1); }
+
+        /* نافذة عامة */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; padding: 15px; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #1f2937; border: 2px solid var(--gold); border-radius: 12px; padding: 15px; width: 100%; max-width: 350px; max-height: 80vh; overflow-y: auto; }
+
+        /* ذاكرة البوت */
+        .memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 0.8rem; }
+        .delete-btn { background: var(--red); border: none; color: #fff; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
+
+        /* نافذة يوتيوب والخط */
+        .youtube-result { display: flex; gap: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
+        .youtube-result img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
+        .font-preview { padding: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; text-align: center; margin-bottom: 10px; }
+        .font-select, .color-picker { margin-bottom: 10px; }
+        .size-slider { width: 100%; margin-bottom: 10px; }
+
+        /* شريط التنقل السفلي */
+        #bottomNav { height: 55px; background: #111827; border-top: 2px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
+        .nav-btn { background: none; border: none; color: var(--muted); font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+        .nav-btn.active { color: var(--gold); }
+        .nav-icon { font-size: 1.4rem; }
     </style>
 </head>
-<body>
-    <header>
-        <h3>شات قمر الشام</h3>
-        <div id="roomTitle">الروم العام</div>
-        <button id="memoryBtn" onclick="showMemory()">🧠 ذاكرة البوت</button>
-    </header>
+<body onclick="closeAllPopups(event)"><header>
+    <button class="toggle-btn" onclick="toggleSidebar('right')">📂 الرومات</button>
+    <div id="headerTitle">قمر الشام - الروم العام</div>
+    <button class="toggle-btn" onclick="toggleSidebar('left')">👑 الرتب</button>
+</header>
 
-    <div id="messages"></div>
+<div class="main-container">
+    <aside id="rightAside" onclick="event.stopPropagation()">
+        <div class="aside-header">🏰 الرومات</div>
+        <div class="room-item active" onclick="switchRoom('عام', this)">📌 الروم العام <span class="room-badge">150</span></div>
+        <div class="room-item" onclick="switchRoom('ديوان الحكم', this)">👑 ديوان الحكم <span class="room-badge">25</span></div>
+        <div class="room-item" onclick="switchRoom('ليالي الشعر', this)">📜 ليالي الشعر <span class="room-badge">45</span></div>
+        <div class="room-item" onclick="switchRoom('خاص', this)">🔒 الخاص مع البوت</div>
+    </aside>
 
-    <div class="input-bar">
-        <button id="roomToggle" onclick="toggleRoom()">تبديل الروم</button>
-        <input type="text" id="messageInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()" />
-        <button id="sendBtn" onclick="sendMessage()">إرسال</button>
-    </div>
+    <aside id="leftAside" onclick="event.stopPropagation()">
+        <div class="aside-header">👑 الرتب</div>
+        <div class="rank-item">👑 الملك (عماد)</div>
+        <div class="rank-item" style="color:var(--pink)">💖 الملكة (آيلا)</div>
+        <div class="rank-item">⭐ سوبر أدمن (3)</div>
+        <div class="rank-item">🛡️ أدمن (5)</div>
+        <div class="rank-item">🎖️ مشرف (8)</div>
+        <div class="rank-item">✨ VIP (15)</div>
+        <div class="rank-item">👤 عضو (50)</div>
+    </aside>
 
-    <div class="info">🤖 في الخاص: بوت تعلم: السؤال = الجواب | في العام: بوت + الكلمة المتعلمة</div>
+    <div id="chatArea">
+        <div class="mics-bar" id="micsBar">
+            <div class="mic-slot" onclick="requestMicToggle(0)" id="mic0">🎤</div>
+            <div class="mic-slot" onclick="requestMicToggle(1)" id="mic1">🎤</div>
+            <div class="mic-slot" onclick="requestMicToggle(2)" id="mic2">🎤</div>
+            <div class="mic-slot" onclick="requestMicToggle(3)" id="mic3">🎤</div>
+            <button class="mics-toggle-arrow" id="micsArrow" onclick="toggleMicsBar()">▼</button>
+        </div>
 
-    <!-- نافذة ذاكرة البوت -->
-    <div class="memory-overlay" id="memoryOverlay" onclick="closeMemory()">
-        <div class="memory-box" onclick="event.stopPropagation()">
-            <div class="memory-header">
-                <h3>🧠 ردود البوت المحفوظة</h3>
-                <button id="closeMemoryBtn" onclick="closeMemory()">✕</button>
+        <div id="messagesContainer"></div>
+
+        <div id="inputBar" onclick="event.stopPropagation()">
+            <div id="emojiBar">
+                <div class="emoji-slot" onclick="insertEmoji('1.gif')"><img src="1.gif" alt="1"></div>
+                <div class="emoji-slot" onclick="insertEmoji('2.gif')"><img src="2.gif" alt="2"></div>
+                <div class="emoji-slot" onclick="insertEmoji('3.gif')"><img src="3.gif" alt="3"></div>
+                <div class="emoji-slot" id="fileSlot" onclick="document.getElementById('userFileInput').click()">+</div>
+                <input type="file" id="userFileInput" accept="image/*,video/*,audio/*,.gif" style="display:none" onchange="handleUserFile(event)">
             </div>
-            <div id="memoryList"></div>
+            <div class="input-row">
+                <button class="icon-btn" onclick="toggleEmojiBar()">😊</button>
+                <input type="text" id="messageInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()" />
+                <button class="icon-btn" onclick="togglePlusMenu()">+</button>
+                <button id="sendBtn" onclick="sendMessage()">إرسال</button>
+            </div>
+            <div id="plusMenu">
+                <button class="plus-item" onclick="openYoutubeModal()">🎬 يوتيوب</button>
+                <button class="plus-item" onclick="openFontModal()">🔤 خط</button>
+                <button class="plus-item" onclick="rollDice()">🎲 نرد</button>
+                <button class="plus-item" onclick="openMediaModal()">📁 وسائط</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let currentRoom = 'عام';
-        let botMemory = JSON.parse(localStorage.getItem('bot_memory')) || {
-            "شلونك": "تمام 🌙",
-            "ارقص": "💃"
+<div id="bottomNav">
+    <button class="nav-btn" onclick="bottomNavAction('options')"><span class="nav-icon">⚙️</span>خيارات</button>
+    <button class="nav-btn" onclick="bottomNavAction('online')"><span class="nav-icon">👥</span>المتصلين</button>
+    <button class="nav-btn active" onclick="bottomNavAction('home')"><span class="nav-icon">🏠</span>الرئيسية</button>
+    <button class="nav-btn" onclick="bottomNavAction('friends')"><span class="nav-icon">➕</span>الأصدقاء</button>
+</div>
+
+<!-- نافذة الذاكرة -->
+<div class="modal-overlay" id="memoryOverlay" onclick="closeMemory()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="color:var(--gold)">🧠 ذاكرة البوت</h3>
+            <button class="toggle-btn" onclick="closeMemory()">✕</button>
+        </div>
+        <div id="memoryList"></div>
+    </div>
+</div>
+
+<!-- نافذة يوتيوب -->
+<div class="modal-overlay" id="youtubeModal" onclick="closeYoutubeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="color:var(--gold)">بحث يوتيوب</h3>
+            <button class="toggle-btn" onclick="closeYoutubeModal()">✕</button>
+        </div>
+        <input type="text" id="youtubeSearchInput" placeholder="ابحث..." style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--gold);background:#111;color:#fff;margin-bottom:10px;" onkeypress="if(event.key==='Enter') searchYoutube()">
+        <div id="youtubeResults"></div>
+    </div>
+</div>
+
+<!-- نافذة الخط -->
+<div class="modal-overlay" id="fontModal" onclick="closeFontModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h3 style="color:var(--gold)">تعديل الخط</h3>
+            <button class="toggle-btn" onclick="closeFontModal()">✕</button>
+        </div>
+        <div class="font-preview" id="fontPreview">نص تجريبي</div>
+        <select class="font-select" id="fontFamilySelect" onchange="updateFontPreview()" style="width:100%;padding:8px;border-radius:6px;background:#111;color:#fff;border:1px solid var(--gold);">
+            <option value="Cairo">القاهرة</option>
+            <option value="Amiri">أميري</option>
+            <option value="Reem Kufi">كوفي</option>
+            <option value="Marhey">مرحي</option>
+        </select>
+        <label style="font-size:0.8rem;">الحجم</label>
+        <input type="range" class="size-slider" id="fontSizeSlider" min="12" max="28" value="16" oninput="updateFontPreview()">
+        <label style="font-size:0.8rem;">اللون</label>
+        <div id="fontColors" style="display:flex;gap:5px;margin-bottom:10px;">
+            <div class="color-option" style="background:#fff;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#fff', this)"></div>
+            <div class="color-option" style="background:#fde047;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#fde047', this)"></div>
+            <div class="color-option" style="background:#ec4899;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#ec4899', this)"></div>
+            <div class="color-option" style="background:#8b5cf6;width:25px;height:25px;border-radius:50%;cursor:pointer;" onclick="selectFontColor('#8b5cf6', this)"></div>
+        </div>
+        <button class="toggle-btn" onclick="toggleMessageBorder()" id="borderBtn" style="width:100%;margin-bottom:10px;">تفعيل الإطار</button>
+        <button style="width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),#b45309);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;" onclick="applyFontStyle()">تطبيق</button>
+    </div>
+</div>
+
+<script>// ====== حالة عامة ======
+let currentRoom = 'عام';
+let activeMics = [false, false, false, false];
+let currentUser = { name: 'عماد', avatar: '1.gif' };
+let selectedStickers = [];
+let selectedFontStyle = { family: 'Cairo', size: 16, color: '#fff', border: false };
+
+// ====== بيانات تجريبية ======
+const onlineUsers = [
+    { name: 'عماد', avatar: '1.gif', rank: 'الملك 👑' },
+    { name: 'آيلا', avatar: '1.gif', rank: 'الملكة 💖' },
+    { name: 'سامر', avatar: '17.gif', rank: 'VIP ✨' }
+];
+
+// ====== تهيئة ======
+window.addEventListener('DOMContentLoaded', () => {
+    addMessage('🤖 بوت قمر الشام', '17.gif', 'أهلاً بك يا ملك عماد ✨', true);
+    occupyMic(0, onlineUsers[2]);
+    occupyMic(1, onlineUsers[2]);
+});
+
+// ====== الرسائل ======
+function addMessage(sender, avatar, text, isBot = false, stickers = []) {
+    const container = document.getElementById('messagesContainer');
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `<img src="${avatar}" class="msg-avatar" onclick="showUserProfile('${sender}', '${avatar}')">
+        <div class="msg-content">
+            <div class="msg-name">${sender}</div>
+            <div class="msg-text ${isBot ? 'bot-msg-text' : ''}">${text || ''}</div>
+        </div>`;
+    if (stickers.length > 0) {
+        const stickerDiv = document.createElement('div');
+        stickerDiv.style.display = 'flex';
+        stickerDiv.style.gap = '5px';
+        stickerDiv.style.marginTop = '5px';
+        stickers.forEach(s => {
+            const img = document.createElement('img');
+            img.src = s;
+            img.className = 'msg-sticker';
+            stickerDiv.appendChild(img);
+        });
+        row.querySelector('.msg-content').appendChild(stickerDiv);
+    }
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const msg = input.value.trim();
+    const stickers = [...selectedStickers];
+    if (!msg && stickers.length === 0) return;
+
+    addMessage(currentUser.name, currentUser.avatar, msg, false, stickers);
+
+    // منطق البوت
+    if (msg) {
+        if (currentRoom === 'خاص' && (msg.includes('بوت تعلم') || msg.includes('البوت تعلم'))) {
+            learnBot(msg);
+        } else if (msg.includes('بوت') || msg.includes('بووت') || msg.includes('البوت') || msg.includes('البووت')) {
+            const reply = findAnswer(msg);
+            if (reply) setTimeout(() => addMessage('🤖 بوت', '17.gif', reply, true), 500);
+        }
+    }
+
+    input.value = '';
+    selectedStickers = [];
+    updatePreviewBar();
+}
+
+// ====== البوت ======
+let botMemory = JSON.parse(localStorage.getItem('bot_memory')) || { "شلونك": "تمام 🌙", "ارقص": "💃" };
+
+function findAnswer(msg) {
+    const lower = msg.toLowerCase().trim();
+    for (let key in botMemory) {
+        if (lower.includes(key.toLowerCase())) return botMemory[key];
+    }
+    if (currentRoom === 'خاص') return 'ما تعلمت هذا بعد!\nبوت تعلم: السؤال = الجواب';
+    return null;
+}
+
+function learnBot(message) {
+    let clean = message.replace(/بوت تعلم|البوت تعلم|بووت تعلم|البووت تعلم/gi, '').trim();
+    clean = clean.replace(/^[:,\s]+/, '');
+    const parts = clean.split('=');
+    if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+        botMemory[parts[0].trim()] = parts[1].trim();
+        localStorage.setItem('bot_memory', JSON.stringify(botMemory));
+        addMessage('🤖 بوت', '17.gif', `✅ تم الحفظ: "${parts[0].trim()}" = "${parts[1].trim()}"`, true);
+    } else {
+        addMessage('🤖 بوت', '17.gif', '❌ استخدم: بوت تعلم: السؤال = الجواب', true);
+    }
+}
+
+// ====== المايكات ======
+function requestMicToggle(index) {
+    const isJoining = !activeMics[index];
+    if (confirm(isJoining ? 'الانضمام للمايك؟' : 'الخروج من المايك؟')) {
+        if (isJoining) joinMic(index);
+        else leaveMic(index);
+    }
+}
+function joinMic(index) {
+    const slot = document.getElementById(`mic${index}`);
+    activeMics[index] = true;
+    slot.classList.add('occupied');
+    slot.innerHTML = `<img src="${currentUser.avatar}">`;
+    addMessage('🔊', '17.gif', `${currentUser.name} انضم للمايك ${index + 1}`, true);
+}
+function leaveMic(index) {
+    const slot = document.getElementById(`mic${index}`);
+    activeMics[index] = false;
+    slot.classList.remove('occupied');
+    slot.innerHTML = '🎤';
+    addMessage('🔊', '17.gif', `${currentUser.name} غادر المايك ${index + 1}`, true);
+}
+function occupyMic(index, user) {
+    const slot = document.getElementById(`mic${index}`);
+    activeMics[index] = true;
+    slot.classList.add('occupied');
+    slot.innerHTML = `<img src="${user.avatar}">`;
+}
+function toggleMicsBar() {
+    const bar = document.getElementById('micsBar');
+    bar.classList.toggle('hidden');
+    document.getElementById('micsArrow').textContent = bar.classList.contains('hidden') ? '▲' : '▼';
+}
+
+// ====== الرومات ======
+function switchRoom(roomName, element) {
+    currentRoom = roomName;
+    document.getElementById('headerTitle').textContent = `قمر الشام - ${roomName}`;
+    document.querySelectorAll('.room-item').forEach(i => i.classList.remove('active'));
+    if (element) element.classList.add('active');
+    document.getElementById('messagesContainer').innerHTML = '';
+    const msgs = {
+        'عام': '📌 الروم العام\nالبوت يرد فقط على الكلمات المتعلمة',
+        'ديوان الحكم': '👑 ديوان الحكم',
+        'ليالي الشعر': '📜 ليالي الشعر',
+        'خاص': '🔒 الخاص مع البوت\nمثال: بوت تعلم: شلونك = تمام'
+    };
+    addMessage('🤖 بوت', '17.gif', msgs[roomName] || 'أهلاً', true);
+    closeAllPopups();
+}
+
+function toggleSidebar(side) {
+    const right = document.getElementById('rightAside');
+    const left = document.getElementById('leftAside');
+    if (side === 'right') { right.classList.toggle('active'); left.classList.remove('active'); }
+    else { left.classList.toggle('active'); right.classList.remove('active'); }
+}
+
+function closeAllPopups() {
+    document.getElementById('rightAside').classList.remove('active');
+    document.getElementById('leftAside').classList.remove('active');
+    document.getElementById('plusMenu').classList.remove('show');
+    document.getElementById('emojiBar').classList.remove('show');
+}
+
+// ====== شريط الإيموجي ======
+function toggleEmojiBar() {
+    document.getElementById('emojiBar').classList.toggle('show');
+    document.getElementById('plusMenu').classList.remove('show');
+}
+function insertEmoji(src) {
+    const input = document.getElementById('messageInput');
+    input.value += src + ' ';
+    input.focus();
+}
+function handleUserFile(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            let saved = JSON.parse(localStorage.getItem('saved_files') || '[]');
+            saved.push({ name: file.name, data: e.target.result });
+            localStorage.setItem('saved_files', JSON.stringify(saved));
+            document.getElementById('fileSlot').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
+            selectedStickers.push(e.target.result);
+            updatePreviewBar();
         };
-
-        function addMessage(text, isBot = false) {
-            const messages = document.getElementById('messages');
+        reader.readAsDataURL(file);
+    }
+}
+function updatePreviewBar() {
+    const bar = document.getElementById('previewBar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    if (selectedStickers.length) {
+        bar.style.display = 'flex';
+        selectedStickers.forEach((s, i) => {
             const div = document.createElement('div');
-            div.className = 'msg ' + (isBot ? 'bot' : 'user');
-            div.textContent = text;
-            messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
+            div.style.position = 'relative';
+            div.innerHTML = `<img src="${s}" style="width:40px;height:40px;object-fit:contain;"><button style="position:absolute;top:-4px;right:-4px;background:red;border:none;color:#fff;border-radius:50%;width:14px;height:14px;font-size:8px;" onclick="removeSticker(${i})">×</button>`;
+            bar.appendChild(div);
+        });
+    } else {
+        bar.style.display = 'none';
+    }
+}
+function removeSticker(i) { selectedStickers.splice(i, 1); updatePreviewBar(); }
+
+// ====== قائمة + ======
+function togglePlusMenu() {
+    document.getElementById('plusMenu').classList.toggle('show');
+    document.getElementById('emojiBar').classList.remove('show');
+}
+function rollDice() {
+    const num = Math.floor(Math.random() * 6) + 1;
+    addMessage('🎲', currentUser.avatar, `خرج: ${num}`, false);
+    closeAllPopups();
+}
+function openMediaModal() {
+    document.getElementById('userFileInput').click();
+    closeAllPopups();
+}
+
+// ====== يوتيوب ======
+function openYoutubeModal() { document.getElementById('youtubeModal').classList.add('show'); closeAllPopups(); }
+function closeYoutubeModal() { document.getElementById('youtubeModal').classList.remove('show'); }
+function searchYoutube() {
+    const q = document.getElementById('youtubeSearchInput').value.trim();
+    if (!q) return;
+    const results = [
+        { title: `${q} - فيديو 1`, channel: 'قناة 1', thumb: 'https://via.placeholder.com/70x50' },
+        { title: `${q} - فيديو 2`, channel: 'قناة 2', thumb: 'https://via.placeholder.com/70x50' },
+        { title: `${q} - فيديو 3`, channel: 'قناة 3', thumb: 'https://via.placeholder.com/70x50' }
+    ];
+    const container = document.getElementById('youtubeResults');
+    container.innerHTML = '';
+    results.forEach(v => {
+        const div = document.createElement('div');
+        div.className = 'youtube-result';
+        div.innerHTML = `<img src="${v.thumb}"><div><div>${v.title}</div><div style="color:#9ca3af;font-size:0.7rem;">${v.channel}</div></div>`;
+        div.onclick = () => { addMessage(currentUser.name, currentUser.avatar, `🎥 ${v.title}`, false); closeYoutubeModal(); };
+        container.appendChild(div);
+    });
+}
+
+// ====== الخط ======
+function openFontModal() { document.getElementById('fontModal').classList.add('show'); closeAllPopups(); }
+function closeFontModal() { document.getElementById('fontModal').classList.remove('show'); }
+function updateFontPreview() {
+    const family = document.getElementById('fontFamilySelect').value;
+    const size = document.getElementById('fontSizeSlider').value;
+    document.getElementById('fontPreview').style.fontFamily = family;
+    document.getElementById('fontPreview').style.fontSize = size + 'px';
+}
+function selectFontColor(color, el) {
+    document.querySelectorAll('#fontColors .color-option').forEach(o => o.style.border = 'none');
+    el.style.border = '2px solid var(--gold)';
+    selectedFontStyle.color = color;
+}
+function toggleMessageBorder() {
+    selectedFontStyle.border = !selectedFontStyle.border;
+    document.getElementById('borderBtn').textContent = selectedFontStyle.border ? 'إلغاء الإطار' : 'تفعيل الإطار';
+}
+function applyFontStyle() {
+    selectedFontStyle.family = document.getElementById('fontFamilySelect').value;
+    selectedFontStyle.size = parseInt(document.getElementById('fontSizeSlider').value);
+    closeFontModal();
+    addMessage('🔤', currentUser.avatar, 'تم تطبيق التنسيق', false);
+}
+
+// ====== ذاكرة البوت ======
+function showMemory() {
+    const list = document.getElementById('memoryList');
+    list.innerHTML = '';
+    for (let key in botMemory) {
+        const div = document.createElement('div');
+        div.className = 'memory-item';
+        div.innerHTML = `<span>${key} = ${botMemory[key]}</span><button class="delete-btn" onclick="deleteMemoryItem('${key}')">حذف</button>`;
+        list.appendChild(div);
+    }
+    document.getElementById('memoryOverlay').classList.add('show');
+}
+function closeMemory() { document.getElementById('memoryOverlay').classList.remove('show'); }
+function deleteMemoryItem(key) {
+    delete botMemory[key];
+    localStorage.setItem('bot_memory', JSON.stringify(botMemory));
+    showMemory();
+}        // ====== البروفايل ======
+        function showUserProfile(name, avatar) {
+            alert(`بروفايل: ${name}`);
         }
 
-        function findAnswer(msg) {
-            const lower = msg.toLowerCase().trim();
-            for (let key in botMemory) {
-                if (lower.includes(key.toLowerCase())) {
-                    return botMemory[key];
-                }
+        // ====== التنقل السفلي ======
+        function bottomNavAction(action) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+            if (action === 'options') showMemory();
+            else if (action === 'online') {
+                let list = 'المتصلون:\n';
+                onlineUsers.forEach(u => list += `${u.rank} ${u.name} 🟢\n`);
+                addMessage('👥', '17.gif', list, true);
+            } else if (action === 'home') {
+                addMessage('🏠', '17.gif', 'أهلاً في الرئيسية!', true);
             }
-            if (currentRoom === 'خاص') {
-                return "ما تعلمت هذا بعد! علمني:\nبوت تعلم: السؤال = الجواب";
-            }
-            return null;
         }
 
-        function learnBot(message) {
-            let clean = message.replace(/بوت تعلم|البوت تعلم|بووت تعلم|البووت تعلم/gi, '').trim();
-            clean = clean.replace(/^[:,\s]+/, '');
-            const parts = clean.split('=');
-            if (parts.length === 2) {
-                const q = parts[0].trim();
-                const a = parts[1].trim();
-                if (q && a) {
-                    botMemory[q] = a;
-                    localStorage.setItem('bot_memory', JSON.stringify(botMemory));
-                    addMessage('🤖 تم الحفظ! "' + q + '" = "' + a + '"', true);
-                } else {
-                    addMessage('❌ صيغة خاطئة. مثال: بوت تعلم: شلونك = تمام', true);
-                }
-            } else {
-                addMessage('❌ صيغة خاطئة. مثال: بوت تعلم: شلونك = تمام', true);
-            }
+        // ====== تحميل ======
+        function loadSavedData() {
+            const name = localStorage.getItem('user_name');
+            if (name) currentUser.name = name;
+            const avatar = localStorage.getItem('user_avatar');
+            if (avatar) currentUser.avatar = avatar;
         }
-
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const msg = input.value.trim();
-            if (!msg) return;
-
-            addMessage('👤 ' + msg);
-
-            if (currentRoom === 'خاص' && (msg.includes('بوت تعلم') || msg.includes('البوت تعلم'))) {
-                learnBot(msg);
-            } else if (msg.includes('بوت') || msg.includes('بووت') || msg.includes('البوت') || msg.includes('البووت')) {
-                const reply = findAnswer(msg);
-                if (reply) {
-                    setTimeout(() => addMessage('🤖 ' + reply, true), 500);
-                }
-            }
-
-            input.value = '';
-        }
-
-        function toggleRoom() {
-            currentRoom = (currentRoom === 'عام') ? 'خاص' : 'عام';
-            document.getElementById('roomTitle').textContent = 'الروم ' + currentRoom;
-            document.getElementById('messages').innerHTML = '';
-            if (currentRoom === 'خاص') {
-                addMessage('🔒 الروم الخاص للتدريب مع البوت\nمثال: بوت تعلم: شلونك = تمام', true);
-            } else {
-                addMessage('📌 الروم العام\nالبوت يرد فقط على الكلمات المتعلمة', true);
-            }
-        }
-
-        // ============ ذاكرة البوت ============
-        function showMemory() {
-            const overlay = document.getElementById('memoryOverlay');
-            const list = document.getElementById('memoryList');
-            list.innerHTML = '';
-            for (let key in botMemory) {
-                const item = document.createElement('div');
-                item.className = 'memory-item';
-                item.innerHTML = `
-                    <span>${key} = ${botMemory[key]}</span>
-                    <button class="delete-btn" onclick="deleteMemoryItem('${key}')">حذف</button>
-                `;
-                list.appendChild(item);
-            }
-            overlay.classList.add('show');
-        }
-
-        function closeMemory() {
-            document.getElementById('memoryOverlay').classList.remove('show');
-        }
-
-        function deleteMemoryItem(key) {
-            delete botMemory[key];
-            localStorage.setItem('bot_memory', JSON.stringify(botMemory));
-            // تحديث القائمة فوراً
-            showMemory();
-            addMessage('🗑️ تم حذف: "' + key + '" من ذاكرة البوت', true);
-        }
-
-        // رسالة ترحيب
-        addMessage('أهلاً بك في شات قمر الشام ✨', true);
+        loadSavedData();
     </script>
 </body>
 </html>
