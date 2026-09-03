@@ -1,704 +1,239 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>شات قمر الشام - النسخة النهائية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Amiri&family=Reem+Kufi&family=Marhey&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --gold: #d97706;
-            --pink: #ec4899;
-            --dark: #111827;
-            --darker: #1f2937;
-            --text: #e5e7eb;
-            --muted: #9ca3af;
-            --green: #10b981;
-            --red: #ef4444;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
-        body { background: #0c0814; color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        header {
-            background: linear-gradient(135deg, #1f2937, #111827);
-            border-bottom: 2px solid var(--gold);
-            padding: 10px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-        }
-        #headerTitle { font-weight: bold; font-size: 1.1rem; background: linear-gradient(135deg, var(--gold), #fbbf24); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .toggle-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-
-        .main-container { display: flex; flex: 1; position: relative; overflow: hidden; }
-
-        aside {
-            width: 30%; max-width: 250px; min-width: 180px;
-            background: linear-gradient(180deg, #1f2937, #111827);
-            display: flex; flex-direction: column;
-            transition: transform 0.3s;
-            position: absolute; top: 0; bottom: 0;
-            z-index: 20; overflow-y: auto;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        #rightAside { right: 0; transform: translateX(100%); border-left: 2px solid var(--gold); }
-        #rightAside.active { transform: translateX(0); }
-        #leftAside { left: 0; transform: translateX(-100%); border-right: 2px solid var(--gold); }
-        #leftAside.active { transform: translateX(0); }
-        .aside-header { padding: 14px; font-weight: bold; color: var(--gold); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .room-item, .rank-item { padding: 12px 14px; cursor: pointer; color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: background 0.2s; }
-        .room-item:hover, .rank-item:hover { background: rgba(217,119,6,0.1); }
-        .room-item.active { background: rgba(217,119,6,0.3); color: var(--gold); font-weight: bold; }
-        .room-badge { background: var(--gold); color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-right: auto; }
-
-        #chatArea { flex: 1; display: flex; flex-direction: column; position: relative; background: linear-gradient(rgba(10,15,30,0.7), rgba(10,15,30,0.8)), url('https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop') center/cover; }
-
-        .mics-bar { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.6); border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .mics-bar.hidden { display: none; }
-        .mic-slot { width: 45px; height: 45px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #fff; overflow: hidden; }
-        .mic-slot.occupied { background: linear-gradient(135deg, var(--gold), #b45309); }
-        .mic-slot.occupied img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-
-        .mics-toggle-wrapper { position: relative; }
-        .mics-toggle-arrow {
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            border: 1px solid var(--gold);
-            color: var(--gold);
-            width: 30px;
-            height: 20px;
-            border-radius: 0 0 15px 15px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            z-index: 6;
-        }
-        .mics-toggle-arrow.hidden {
-            bottom: auto;
-            top: -15px;
-            border-radius: 15px 15px 0 0;
-        }
-
-        #messagesContainer { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .msg-row { display: flex; gap: 8px; align-items: flex-start; word-break: break-word; position: relative; }
-        .msg-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; flex-shrink: 0; cursor: pointer; }
-        .msg-content { max-width: calc(100% - 43px); flex: 1; }
-        .msg-name { font-size: 0.75rem; font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; width: fit-content; cursor: pointer; }
-        .msg-text { font-size: 1rem; color: #fff; padding: 4px 0; white-space: pre-wrap; word-break: break-word; }
-        .bot-msg-text { color: #fde047; }
-        .msg-sticker { width: 60px; height: 60px; object-fit: contain; }
-        .msg-options-btn { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 1.2rem; padding: 0 5px; align-self: center; }
-        .msg-options-menu { display: none; position: absolute; background: #1f2937; border: 1px solid var(--gold); border-radius: 6px; padding: 5px; z-index: 50; min-width: 120px; }
-        .msg-options-menu.show { display: block; }
-        .msg-option-item { padding: 6px 10px; cursor: pointer; color: var(--text); font-size: 0.8rem; border-radius: 4px; }
-        .msg-option-item:hover { background: rgba(255,255,255,0.1); }
-        .reply-indicator { background: rgba(0,0,0,0.3); border-right: 3px solid var(--gold); padding: 5px; margin-bottom: 5px; border-radius: 4px; font-size: 0.7rem; color: #d1d5db; }
-        .reply-original {
-            background: rgba(0,0,0,0.2);
-            border-right: 2px solid var(--muted);
-            padding: 5px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            color: #d1d5db;
-            margin-top: 3px;
-        }
-        .reaction-bar { display: flex; gap: 4px; margin-top: 5px; }
-        .reaction-pill { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; cursor: pointer; }
-
-        .dice-msg {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 50px;
-            height: 50px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            animation: diceRoll 0.8s ease-out;
-        }
-        .dice-msg span { font-size: 2rem; color: #111; }
-        @keyframes diceRoll {
-            0% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(90deg) scale(1.3); }
-            50% { transform: rotate(180deg) scale(0.8); }
-            75% { transform: rotate(270deg) scale(1.2); }
-            100% { transform: rotate(360deg) scale(1); }
-        }
-
-        #inputBar { padding: 10px; background: rgba(0,0,0,0.8); border-top: 1px solid rgba(255,255,255,0.1); position: relative; }
-        #emojiBar { display: none; gap: 8px; padding: 8px; background: rgba(0,0,0,0.5); border-radius: 8px; margin-bottom: 8px; overflow-x: auto; }
-        #emojiBar.show { display: flex; }
-        .emoji-slot { width: 50px; height: 50px; border-radius: 8px; background: rgba(255,255,255,0.1); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-        .emoji-slot img { width: 40px; height: 40px; object-fit: contain; }
-        #fileSlot { border: 1px dashed var(--gold); color: var(--gold); font-size: 1.5rem; }
-        .input-row { display: flex; gap: 8px; align-items: center; }
-        .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--gold); width: 40px; height: 40px; border-radius: 8px; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; }
-        #messageInput { flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px; color: #fff; outline: none; font-size: 0.95rem; }
-        #sendBtn { background: linear-gradient(135deg, var(--gold), #b45309); border: none; border-radius: 8px; color: #fff; font-weight: bold; padding: 0 18px; height: 40px; cursor: pointer; }
-        #previewBar { display: none; gap: 6px; padding: 4px; background: rgba(255,255,255,0.05); border-radius: 8px; overflow-x: auto; margin-bottom: 5px; }
-        #previewBar.show { display: flex; }
-        .preview-item { position: relative; flex-shrink: 0; }
-        .preview-item img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-        .preview-item button { position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; border: none; border-radius: 50%; width: 14px; height: 14px; font-size: 8px; cursor: pointer; }
-
-        #plusMenu { display: none; position: absolute; bottom: 60px; left: 10px; background: #1f2937; border: 1px solid var(--gold); border-radius: 8px; padding: 5px; z-index: 50; flex-direction: column; gap: 4px; }
-        #plusMenu.show { display: flex; }
-        .plus-item { background: none; border: none; color: #fff; padding: 8px 12px; border-radius: 5px; cursor: pointer; text-align: right; font-size: 0.85rem; }
-        .plus-item:hover { background: rgba(255,255,255,0.1); }
-
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; padding: 15px; }
-        .modal-overlay.show { display: flex; }
-        .modal-box { background: #1f2937; border: 2px solid var(--gold); border-radius: 12px; padding: 15px; width: 100%; max-width: 350px; max-height: 80vh; overflow-y: auto; }
-        .memory-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 0.8rem; }
-        .delete-btn { background: var(--red); border: none; color: #fff; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
-        .youtube-result { display: flex; gap: 8px; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 6px; cursor: pointer; }
-        .youtube-result img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
-        .font-preview { padding: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; text-align: center; margin-bottom: 10px; }
-        .font-select, .size-slider { width: 100%; margin-bottom: 10px; }
-        .color-option { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
-        .color-option.selected { border-color: var(--gold); }
-
-        #bottomNav { height: 55px; background: #111827; border-top: 2px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
-        .nav-btn { background: none; border: none; color: var(--muted); font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
-        .nav-btn.active { color: var(--gold); }
-        .nav-icon { font-size: 1.4rem; }
-    </style>
-</head>
-<body onclick="closeAllPopups(event)">
-
-    <header>
-        <button class="toggle-btn" onclick="toggleSidebar(event, 'right')">📂 الرومات</button>
-        <div id="headerTitle">قمر الشام - الروم العام</div>
-        <button class="toggle-btn" onclick="toggleSidebar(event, 'left')">👑 الرتب</button>
-    </header>
-
-    <div class="main-container">
-        <aside id="rightAside" onclick="event.stopPropagation()">
-            <div class="aside-header">🏰 الرومات</div>
-            <div class="room-item active" onclick="switchRoom('عام', this)">📌 الروم العام <span class="room-badge">150</span></div>
-            <div class="room-item" onclick="switchRoom('ديوان الحكم', this)">👑 ديوان الحكم <span class="room-badge">25</span></div>
-            <div class="room-item" onclick="switchRoom('ليالي الشعر', this)">📜 ليالي الشعر <span class="room-badge">45</span></div>
-            <div class="room-item" onclick="switchRoom('خاص', this)">🔒 الخاص مع البوت</div>
-        </aside>
-
-        <aside id="leftAside" onclick="event.stopPropagation()">
-            <div class="aside-header">👑 الرتب</div>
-            <div class="rank-item">👑 الملك (عماد)</div>
-            <div class="rank-item" style="color:var(--pink)">💖 الملكة (آيلا)</div>
-            <div class="rank-item">⭐ سوبر أدمن (3)</div>
-            <div class="rank-item">🛡️ أدمن (5)</div>
-            <div class="rank-item">🎖️ مشرف (8)</div>
-            <div class="rank-item">✨ VIP (15)</div>
-            <div class="rank-item">👤 عضو (50)</div>
-        </aside>
-
-        <div id="chatArea">
-            <div class="mics-toggle-wrapper">
-                <div class="mics-bar" id="micsBar">
-                    <div class="mic-slot" onclick="requestMicToggle(0)" id="mic0">🎤</div>
-                    <div class="mic-slot" onclick="requestMicToggle(1)" id="mic1">🎤</div>
-                    <div class="mic-slot" onclick="requestMicToggle(2)" id="mic2">🎤</div>
-                    <div class="mic-slot" onclick="requestMicToggle(3)" id="mic3">🎤</div>
-                </div>
-                <button class="mics-toggle-arrow" id="micsArrow" onclick="toggleMicsBar()">▼</button>
+<!-- نافذة البروفايل المنبثقة -->
+<div class="modal-overlay" id="profileOverlay" onclick="closeProfile()">
+    <div class="profile-box" onclick="event.stopPropagation()">
+        
+        <!-- خلفية البروفايل -->
+        <div class="profile-cover" id="profileCover">
+            <div class="profile-cover-overlay"></div>
+            <button class="profile-close-btn" onclick="closeProfile()">✕</button>
+            <div class="profile-avatar">
+                <img src="https://i.pravatar.cc/150?img=11" alt="avatar" id="profileAvatar">
             </div>
-
-            <div id="messagesContainer"></div>
-
-            <div id="inputBar" onclick="event.stopPropagation()">
-                <div id="emojiBar">
-                    <div class="emoji-slot" onclick="insertEmojiToInput('1.gif')"><img src="1.gif" alt="1"></div>
-                    <div class="emoji-slot" onclick="insertEmojiToInput('2.gif')"><img src="2.gif" alt="2"></div>
-                    <div class="emoji-slot" onclick="insertEmojiToInput('3.gif')"><img src="3.gif" alt="3"></div>
-                    <div class="emoji-slot" id="fileSlot" onclick="document.getElementById('userFileInput').click()">+</div>
-                    <input type="file" id="userFileInput" accept="image/*,video/*,audio/*,.gif" style="display:none" onchange="handleUserFile(event)">
-                </div>
-                <div id="previewBar"></div>
-                <div class="input-row">
-                    <button class="icon-btn" onclick="toggleEmojiBar(event)">😊</button>
-                    <input type="text" id="messageInput" placeholder="اكتب رسالتك..." onkeypress="if(event.key==='Enter') sendMessage()" />
-                    <button class="icon-btn" onclick="togglePlusMenu(event)">+</button>
-                    <button id="sendBtn" onclick="sendMessage()">إرسال</button>
-                </div>
-                <div id="plusMenu">
-                    <button class="plus-item" onclick="openYoutubeModal()">🎬 يوتيوب</button>
-                    <button class="plus-item" onclick="openFontModal()">🔤 خط</button>
-                    <button class="plus-item" onclick="rollDice()">🎲 نرد</button>
-                    <button class="plus-item" onclick="openMediaModal()">📁 وسائط</button>
-                </div>
-            </div>
+            <div class="profile-name">عماد ♠</div>
+            <div class="profile-rank">الملك 👑</div>
         </div>
-    </div>
 
-    <div id="bottomNav">
-        <button class="nav-btn" onclick="bottomNavAction('options')"><span class="nav-icon">⚙️</span>خيارات</button>
-        <button class="nav-btn" onclick="bottomNavAction('online')"><span class="nav-icon">👥</span>المتصلين</button>
-        <button class="nav-btn active" onclick="bottomNavAction('home')"><span class="nav-icon">🏠</span>الرئيسية</button>
-        <button class="nav-btn" onclick="bottomNavAction('friends')"><span class="nav-icon">➕</span>الأصدقاء</button>
-    </div>
-
-    <!-- نافذة الذاكرة -->
-    <div class="modal-overlay" id="memoryOverlay" onclick="closeMemory()">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <h3 style="color:var(--gold)">🧠 ذاكرة البوت</h3>
-                <button class="toggle-btn" onclick="closeMemory()">✕</button>
+        <!-- قسم تغيير الخلفية -->
+        <div class="profile-section">
+            <div class="section-title">🎨 تغيير الخلفية</div>
+            
+            <div class="bg-options">
+                <div class="bg-option active" onclick="setDefaultBg()">⭐ الافتراضية</div>
+                <div class="bg-option" onclick="chooseBgImage()">🖼️ صورة من الجهاز</div>
             </div>
-            <div id="memoryList"></div>
+            
+            <div class="bg-color-row">
+                <div class="bg-color" style="background:linear-gradient(135deg,#1f2937,#111827)" onclick="setBgGradient(this)"></div>
+                <div class="bg-color" style="background:linear-gradient(135deg,#312e81,#111827)" onclick="setBgGradient(this)"></div>
+                <div class="bg-color" style="background:linear-gradient(135deg,#831843,#111827)" onclick="setBgGradient(this)"></div>
+                <div class="bg-color" style="background:linear-gradient(135deg,#064e3b,#111827)" onclick="setBgGradient(this)"></div>
+                <div class="bg-color" style="background:linear-gradient(135deg,#7c2d12,#111827)" onclick="setBgGradient(this)"></div>
+            </div>
+            
+            <input type="file" id="bgImageInput" accept="image/*" style="display:none" onchange="applyBgImage(event)">
         </div>
+
     </div>
+</div>
 
-    <!-- نافذة يوتيوب -->
-    <div class="modal-overlay" id="youtubeModal" onclick="closeYoutubeModal()">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <h3 style="color:var(--gold)">بحث يوتيوب</h3>
-                <button class="toggle-btn" onclick="closeYoutubeModal()">✕</button>
-            </div>
-            <input type="text" id="youtubeSearchInput" placeholder="ابحث..." style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--gold);background:#111;color:#fff;margin-bottom:10px;" onkeypress="if(event.key==='Enter') searchYoutube()">
-            <div id="youtubeResults"></div>
-        </div>
-    </div>
+<style>
+    .modal-overlay {
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.75);
+        z-index:1000;
+        justify-content:center;
+        align-items:center;
+        padding:15px;
+    }
+    .modal-overlay.show { display:flex; }
 
-    <!-- نافذة الخط -->
-    <div class="modal-overlay" id="fontModal" onclick="closeFontModal()">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <h3 style="color:var(--gold)">تعديل الخط</h3>
-                <button class="toggle-btn" onclick="closeFontModal()">✕</button>
-            </div>
-            <div class="font-preview" id="fontPreview">نص تجريبي</div>
-            <select class="font-select" id="fontFamilySelect" onchange="updateFontPreview()" style="padding:8px;border-radius:6px;background:#111;color:#fff;border:1px solid var(--gold);">
-                <option value="Cairo">القاهرة</option>
-                <option value="Amiri">أميري</option>
-                <option value="Reem Kufi">كوفي</option>
-                <option value="Marhey">مرحي</option>
-            </select>
-            <label style="font-size:0.8rem;">الحجم</label>
-            <input type="range" class="size-slider" id="fontSizeSlider" min="12" max="28" value="16" oninput="updateFontPreview()">
-            <label style="font-size:0.8rem;">اللون</label>
-            <div id="fontColors" style="display:flex;gap:5px;margin-bottom:10px;">
-                <div class="color-option" style="background:#fff;" onclick="selectFontColor('#fff', this)"></div>
-                <div class="color-option" style="background:#fde047;" onclick="selectFontColor('#fde047', this)"></div>
-                <div class="color-option" style="background:#ec4899;" onclick="selectFontColor('#ec4899', this)"></div>
-                <div class="color-option" style="background:#8b5cf6;" onclick="selectFontColor('#8b5cf6', this)"></div>
-            </div>
-            <button class="toggle-btn" onclick="toggleMessageBorder()" id="borderBtn" style="width:100%;margin-bottom:10px;">تفعيل الإطار</button>
-            <button style="width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),#b45309);border:none;border-radius:8px;color:#fff;font-weight:bold;cursor:pointer;" onclick="applyFontStyle()">تطبيق</button>
-        </div>
-    </div>
+    .profile-box {
+        width:100%;
+        max-width:380px;
+        max-height:85vh;
+        background:#111827;
+        border-radius:16px;
+        overflow-y:auto;
+        overflow-x:hidden;
+        border:2px solid #d97706;
+        box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    }
 
-    <script>
-        let currentRoom = 'عام';
-        let activeMics = [false, false, false, false];
-        let currentUser = { name: 'عماد', avatar: '1.gif' };
-        let selectedStickers = [];
-        let selectedFontStyle = { family: 'Cairo', size: 16, color: '#fff', border: false };
-        let botMemory = JSON.parse(localStorage.getItem('bot_memory')) || { "شلونك": "تمام 🌙", "ارقص": "💃" };
-        const onlineUsers = [
-            { name: 'عماد', avatar: '1.gif', rank: 'الملك 👑' },
-            { name: 'آيلا', avatar: '1.gif', rank: 'الملكة 💖' },
-            { name: 'سامر', avatar: '17.gif', rank: 'VIP ✨' }
-        ];
+    .profile-cover {
+        position:relative;
+        height:180px;
+        background:linear-gradient(135deg, #1f2937, #111827);
+        border-bottom:2px solid #d97706;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:flex-end;
+        padding-bottom:12px;
+        transition:background 0.3s;
+    }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            addMessage('🤖 بوت قمر الشام', '17.gif', 'أهلاً بك يا ملك عماد ✨', true);
-            occupyMic(0, onlineUsers[2]);
-            occupyMic(1, onlineUsers[2]);
-        });
+    .profile-cover-overlay {
+        position:absolute;
+        inset:0;
+        background:rgba(0,0,0,0.35);
+    }
 
-        function addMessage(sender, avatar, text, isBot = false, stickers = [], options = {}) {
-            const container = document.getElementById('messagesContainer');
-            const row = document.createElement('div');
-            row.className = 'msg-row';
-            let borderStyle = '';
-            if (options.font && options.font.border) {
-                borderStyle = `border:2px solid ${options.font.color};border-radius:6px;padding:4px 8px;`;
-            }
-            row.innerHTML = `<img src="${avatar}" class="msg-avatar" onclick="showUserProfile('${sender}', '${avatar}')">
-                <div class="msg-content">
-                    <div class="msg-name">${sender}</div>
-                    ${options.replyTo ? `<div class="reply-indicator">↩️ رداً على ${options.replyTo.name}</div><div class="reply-original">💬 ${options.replyTo.text}</div>` : ''}
-                    <div class="msg-text ${isBot ? 'bot-msg-text' : ''}" style="font-family:${options.font ? options.font.family : 'inherit'};font-size:${options.font ? options.font.size : 16}px;color:${options.font ? options.font.color : '#fff'};${borderStyle}">${text || ''}</div>
-                </div>
-                <button class="msg-options-btn" onclick="toggleMsgOptions(event, this)">⋯</button>`;
-            if (stickers.length > 0) {
-                const stickerDiv = document.createElement('div');
-                stickerDiv.style.display = 'flex';
-                stickerDiv.style.gap = '5px';
-                stickerDiv.style.marginTop = '5px';
-                stickers.forEach(s => {
-                    const img = document.createElement('img');
-                    img.src = s;
-                    img.className = 'msg-sticker';
-                    stickerDiv.appendChild(img);
-                });
-                row.querySelector('.msg-content').appendChild(stickerDiv);
-            }
-            container.appendChild(row);
-            container.scrollTop = container.scrollHeight;
-            return row;
-        }
+    .profile-close-btn {
+        position:absolute;
+        top:10px;
+        left:10px;
+        background:rgba(0,0,0,0.5);
+        border:none;
+        color:#fff;
+        width:30px;
+        height:30px;
+        border-radius:50%;
+        cursor:pointer;
+        z-index:2;
+    }
 
-        function toggleMsgOptions(event, btn) {
-            event.stopPropagation();
-            closeAllMsgMenus();
-            const menu = document.createElement('div');
-            menu.className = 'msg-options-menu show';
-            menu.innerHTML = `
-                <div class="msg-option-item" onclick="reactToMessage(this, '👍')">👍 تفاعل</div>
-                <div class="msg-option-item" onclick="reactToMessage(this, '😂')">😂 تفاعل</div>
-                <div class="msg-option-item" onclick="reactToMessage(this, '❤️')">❤️ تفاعل</div>
-                <div class="msg-option-item" onclick="replyToMessage(this)">↩️ رد</div>
-                <div class="msg-option-item" onclick="removeMsgLocally(this)">👁️ إزالة</div>
-                <div class="msg-option-item" onclick="deleteMsg(this)">🗑️ حذف</div>`;
-            btn.parentNode.appendChild(menu);
-        }
+    .profile-avatar {
+        width:75px;
+        height:75px;
+        border-radius:50%;
+        border:3px solid #d97706;
+        overflow:hidden;
+        margin-bottom:5px;
+        z-index:1;
+        background:#fff;
+    }
 
-        function closeAllMsgMenus() {
-            document.querySelectorAll('.msg-options-menu').forEach(m => m.remove());
-        }
+    .profile-avatar img {
+        width:100%;
+        height:100%;
+        object-fit:cover;
+    }
 
-        function reactToMessage(el, emoji) {
-            const row = el.closest('.msg-row');
-            const content = row.querySelector('.msg-content');
-            let reactionBar = content.querySelector('.reaction-bar');
-            if (!reactionBar) {
-                reactionBar = document.createElement('div');
-                reactionBar.className = 'reaction-bar';
-                content.appendChild(reactionBar);
-            }
-            const pill = document.createElement('span');
-            pill.className = 'reaction-pill';
-            pill.textContent = emoji;
-            reactionBar.appendChild(pill);
-            closeAllMsgMenus();
-        }
+    .profile-name {
+        font-weight:bold;
+        font-size:1.1rem;
+        color:#fff;
+        z-index:1;
+    }
 
-        function replyToMessage(el) {
-            closeAllMsgMenus();
-            const row = el.closest('.msg-row');
-            const originalName = row.querySelector('.msg-name').textContent;
-            const originalText = row.querySelector('.msg-text') ? row.querySelector('.msg-text').textContent : '';
-            const reply = prompt('اكتب ردك:');
-            if (reply) {
-                addMessage(currentUser.name, currentUser.avatar, reply, false, [], { replyTo: { name: originalName, text: originalText } });
-            }
-        }
+    .profile-rank {
+        font-size:0.75rem;
+        color:#fde047;
+        z-index:1;
+    }
 
-        function removeMsgLocally(el) {
-            closeAllMsgMenus();
-            const row = el.closest('.msg-row');
-            row.style.display = 'none';
-        }
+    .profile-section {
+        padding:15px;
+    }
 
-        function deleteMsg(el) {
-            closeAllMsgMenus();
-            const row = el.closest('.msg-row');
-            row.remove();
-        }
+    .section-title {
+        color:#d97706;
+        font-weight:bold;
+        font-size:0.9rem;
+        margin-bottom:10px;
+    }
 
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const msg = input.value.trim();
-            const stickers = [...selectedStickers];
-            if (!msg && stickers.length === 0) return;
+    .bg-options {
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        margin-bottom:12px;
+    }
 
-            addMessage(currentUser.name, currentUser.avatar, msg, false, stickers, { font: selectedFontStyle });
+    .bg-option {
+        background:rgba(255,255,255,0.08);
+        border:1px solid rgba(255,255,255,0.2);
+        color:#e5e7eb;
+        padding:8px 12px;
+        border-radius:6px;
+        cursor:pointer;
+        font-size:0.8rem;
+    }
 
-            if (msg) {
-                if (currentRoom === 'خاص' && (msg.includes('بوت تعلم') || msg.includes('البوت تعلم'))) {
-                    learnBot(msg);
-                } else if (msg.includes('بوت') || msg.includes('بووت') || msg.includes('البوت') || msg.includes('البووت')) {
-                    const reply = findAnswer(msg);
-                    if (reply) setTimeout(() => addMessage('🤖 بوت', '17.gif', reply, true), 500);
-                }
-            }
+    .bg-option.active {
+        background:#d97706;
+        color:#000;
+        font-weight:bold;
+    }
 
-            input.value = '';
-            selectedStickers = [];
-            updatePreviewBar();
-        }
+    .bg-color-row {
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+    }
 
-        function findAnswer(msg) {
-            const lower = msg.toLowerCase().trim();
-            for (let key in botMemory) {
-                if (lower.includes(key.toLowerCase())) return botMemory[key];
-            }
-            if (currentRoom === 'خاص') return 'ما تعلمت هذا بعد!\nبوت تعلم: السؤال = الجواب';
-            return null;
-        }
+    .bg-color {
+        width:40px;
+        height:40px;
+        border-radius:8px;
+        cursor:pointer;
+        border:2px solid transparent;
+    }
 
-        function learnBot(message) {
-            let clean = message.replace(/بوت تعلم|البوت تعلم|بووت تعلم|البووت تعلم/gi, '').trim();
-            clean = clean.replace(/^[:,\s]+/, '');
-            const parts = clean.split('=');
-            if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
-                botMemory[parts[0].trim()] = parts[1].trim();
-                localStorage.setItem('bot_memory', JSON.stringify(botMemory));
-                addMessage('🤖 بوت', '17.gif', `✅ تم الحفظ: "${parts[0].trim()}" = "${parts[1].trim()}"`, true);
-            } else {
-                addMessage('🤖 بوت', '17.gif', '❌ استخدم: بوت تعلم: السؤال = الجواب', true);
-            }
-        }
+    .bg-color:hover {
+        border-color:#fff;
+    }
+</style>
 
-        function requestMicToggle(index) {
-            const isJoining = !activeMics[index];
-            if (confirm(isJoining ? 'الانضمام للمايك؟' : 'الخروج من المايك؟')) {
-                isJoining ? joinMic(index) : leaveMic(index);
-            }
-        }
-        function joinMic(index) {
-            const slot = document.getElementById(`mic${index}`);
-            activeMics[index] = true;
-            slot.classList.add('occupied');
-            slot.innerHTML = `<img src="${currentUser.avatar}">`;
-            addMessage('🔊', '17.gif', `${currentUser.name} انضم للمايك ${index + 1}`, true);
-        }
-        function leaveMic(index) {
-            const slot = document.getElementById(`mic${index}`);
-            activeMics[index] = false;
-            slot.classList.remove('occupied');
-            slot.innerHTML = '🎤';
-            addMessage('🔊', '17.gif', `${currentUser.name} غادر المايك ${index + 1}`, true);
-        }
-        function occupyMic(index, user) {
-            const slot = document.getElementById(`mic${index}`);
-            activeMics[index] = true;
-            slot.classList.add('occupied');
-            slot.innerHTML = `<img src="${user.avatar}">`;
-        }
-        function toggleMicsBar() {
-            const bar = document.getElementById('micsBar');
-            const arrow = document.getElementById('micsArrow');
-            bar.classList.toggle('hidden');
-            if (bar.classList.contains('hidden')) {
-                arrow.textContent = '▲';
-                arrow.classList.add('hidden');
-            } else {
-                arrow.textContent = '▼';
-                arrow.classList.remove('hidden');
-            }
-        }
+<script>
+    // إظهار البروفايل
+    function openProfile() {
+        document.getElementById('profileOverlay').classList.add('show');
+    }
 
-        function switchRoom(roomName, element) {
-            currentRoom = roomName;
-            document.getElementById('headerTitle').textContent = `قمر الشام - ${roomName}`;
-            document.querySelectorAll('.room-item').forEach(i => i.classList.remove('active'));
-            if (element) element.classList.add('active');
-            document.getElementById('messagesContainer').innerHTML = '';
-            const msgs = {
-                'عام': '📌 الروم العام\nالبوت يرد فقط على الكلمات المتعلمة',
-                'ديوان الحكم': '👑 ديوان الحكم',
-                'ليالي الشعر': '📜 ليالي الشعر',
-                'خاص': '🔒 الخاص مع البوت\nمثال: بوت تعلم: شلونك = تمام'
-            };
-            addMessage('🤖 بوت', '17.gif', msgs[roomName] || 'أهلاً', true);
-            closeAllPopups();
-        }
+    // إغلاق البروفايل
+    function closeProfile() {
+        document.getElementById('profileOverlay').classList.remove('show');
+    }
 
-        function toggleSidebar(event, side) {
-            event.stopPropagation();
-            const right = document.getElementById('rightAside');
-            const left = document.getElementById('leftAside');
-            if (side === 'right') {
-                right.classList.toggle('active');
-                left.classList.remove('active');
-            } else {
-                left.classList.toggle('active');
-                right.classList.remove('active');
-            }
-        }
+    // الرجوع للخلفية الافتراضية
+    function setDefaultBg() {
+        const cover = document.getElementById('profileCover');
+        cover.style.background = 'linear-gradient(135deg, #1f2937, #111827)';
+        cover.style.backgroundImage = 'linear-gradient(135deg, #1f2937, #111827)';
+        markActiveBg(null);
+    }
 
-        function closeAllPopups(event) {
-            if (event) event.stopPropagation();
-            document.getElementById('rightAside').classList.remove('active');
-            document.getElementById('leftAside').classList.remove('active');
-            document.getElementById('plusMenu').classList.remove('show');
-            document.getElementById('emojiBar').classList.remove('show');
-            closeAllMsgMenus();
-        }
+    // فتح نافذة اختيار صورة من الجهاز
+    function chooseBgImage() {
+        document.getElementById('bgImageInput').click();
+    }
 
-        function toggleEmojiBar(event) {
-            event.stopPropagation();
-            document.getElementById('emojiBar').classList.toggle('show');
-            document.getElementById('plusMenu').classList.remove('show');
-        }
-        function insertEmojiToInput(src) {
-            const input = document.getElementById('messageInput');
-            input.value += src + ' ';
-            input.focus();
-        }
-        function handleUserFile(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    let saved = JSON.parse(localStorage.getItem('saved_files') || '[]');
-                    saved.push({ name: file.name, data: e.target.result, type: file.type });
-                    localStorage.setItem('saved_files', JSON.stringify(saved));
-                    const fileSlot = document.getElementById('fileSlot');
-                    if (file.type.startsWith('image/')) {
-                        fileSlot.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">`;
-                    } else if (file.type.startsWith('video/')) {
-                        fileSlot.innerHTML = '🎬';
-                    } else if (file.type.startsWith('audio/')) {
-                        fileSlot.innerHTML = '🎵';
-                    } else {
-                        fileSlot.innerHTML = '📁';
-                    }
-                    selectedStickers.push(e.target.result);
-                    updatePreviewBar();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    // تطبيق الصورة المختارة
+    function applyBgImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const cover = document.getElementById('profileCover');
+            cover.style.background = `url('${e.target.result}') center/cover`;
+            cover.style.backgroundImage = `url('${e.target.result}')`;
+            markActiveBg(null);
+        };
+        reader.readAsDataURL(file);
+    }
 
-        function updatePreviewBar() {
-            const bar = document.getElementById('previewBar');
-            bar.innerHTML = '';
-            if (selectedStickers.length > 0) {
-                bar.classList.add('show');
-                selectedStickers.forEach((src, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'preview-item';
-                    div.innerHTML = `<img src="${src}"><button onclick="removeSticker(${index})">×</button>`;
-                    bar.appendChild(div);
-                });
-            } else {
-                bar.classList.remove('show');
-            }
-        }
+    // تطبيق تدرج لوني
+    function setBgGradient(el) {
+        const cover = document.getElementById('profileCover');
+        cover.style.background = getComputedStyle(el).background;
+        cover.style.backgroundImage = getComputedStyle(el).backgroundImage;
+        markActiveBg(el);
+    }
 
-        function removeSticker(index) {
-            selectedStickers.splice(index, 1);
-            updatePreviewBar();
-        }
+    // تحديد العنصر النشط
+    function markActiveBg(el) {
+        document.querySelectorAll('.bg-color').forEach(c => c.classList.remove('active'));
+        if (el) el.classList.add('active');
+        document.querySelectorAll('.bg-option').forEach(o => o.classList.remove('active'));
+        if (!el) document.querySelector('.bg-option:first-child').classList.add('active');
+    }
 
-        function togglePlusMenu(event) {
-            event.stopPropagation();
-            document.getElementById('plusMenu').classList.toggle('show');
-            document.getElementById('emojiBar').classList.remove('show');
-        }
-        function rollDice() {
-            const num = Math.floor(Math.random() * 6) + 1;
-            const container = document.getElementById('messagesContainer');
-            const row = document.createElement('div');
-            row.className = 'msg-row';
-            row.innerHTML = `
-                <img src="${currentUser.avatar}" class="msg-avatar">
-                <div class="msg-content">
-                    <div class="msg-name">${currentUser.name}</div>
-                    <div class="dice-msg"><span>${num}</span></div>
-                </div>`;
-            container.appendChild(row);
-            container.scrollTop = container.scrollHeight;
-            try {
-                const audio = new Audio('dice-sound.mp3');
-                audio.volume = 0.5;
-                audio.play().catch(() => {});
-            } catch(e) {}
-            closeAllPopups();
-        }
-        function openMediaModal() {
-            document.getElementById('userFileInput').click();
-            closeAllPopups();
-        }
-
-        function openYoutubeModal() { document.getElementById('youtubeModal').classList.add('show'); closeAllPopups(); }
-        function closeYoutubeModal() { document.getElementById('youtubeModal').classList.remove('show'); }
-        function searchYoutube() {
-            const q = document.getElementById('youtubeSearchInput').value.trim();
-            if (!q) return;
-            const results = [
-                { title: `${q} - فيديو 1`, channel: 'قناة 1', thumb: 'https://via.placeholder.com/70x50', videoId: 'VIDEO_ID_1' },
-                { title: `${q} - فيديو 2`, channel: 'قناة 2', thumb: 'https://via.placeholder.com/70x50', videoId: 'VIDEO_ID_2' },
-                { title: `${q} - فيديو 3`, channel: 'قناة 3', thumb: 'https://via.placeholder.com/70x50', videoId: 'VIDEO_ID_3' }
-            ];
-            const container = document.getElementById('youtubeResults');
-            container.innerHTML = '';
-            results.forEach(v => {
-                const div = document.createElement('div');
-                div.className = 'youtube-result';
-                div.innerHTML = `<img src="${v.thumb}"><div><div>${v.title}</div><div style="color:#9ca3af;font-size:0.7rem;">${v.channel}</div></div>`;
-                div.onclick = () => {
-                    addMessage(currentUser.name, currentUser.avatar, `🎥 ${v.title}`, false, [], { video: v });
-                    closeYoutubeModal();
-                };
-                container.appendChild(div);
-            });
-        }
-
-        function openFontModal() { document.getElementById('fontModal').classList.add('show'); closeAllPopups(); }
-        function closeFontModal() { document.getElementById('fontModal').classList.remove('show'); }
-        function updateFontPreview() {
-            const family = document.getElementById('fontFamilySelect').value;
-            const size = document.getElementById('fontSizeSlider').value;
-            const preview = document.getElementById('fontPreview');
-            preview.style.fontFamily = family;
-            preview.style.fontSize = size + 'px';
-        }
-        function selectFontColor(color, el) {
-            document.querySelectorAll('#fontColors .color-option').forEach(o => o.classList.remove('selected'));
-            el.classList.add('selected');
-            selectedFontStyle.color = color;
-        }
-        function toggleMessageBorder() {
-            selectedFontStyle.border = !selectedFontStyle.border;
-            document.getElementById('borderBtn').textContent = selectedFontStyle.border ? 'إلغاء الإطار' : 'تفعيل الإطار';
-        }
-        function applyFontStyle() {
-            selectedFontStyle.family = document.getElementById('fontFamilySelect').value;
-            selectedFontStyle.size = parseInt(document.getElementById('fontSizeSlider').value);
-            closeFontModal();
-            addMessage('🔤', currentUser.avatar, 'تم تطبيق التنسيق', false);
-        }
-
-        function showMemory() {
-            const list = document.getElementById('memoryList');
-            list.innerHTML = '';
-            for (let key in botMemory) {
-                const div = document.createElement('div');
-                div.className = 'memory-item';
-                div.innerHTML = `<span>${key} = ${botMemory[key]}</span><button class="delete-btn" onclick="deleteMemoryItem('${key}')">حذف</button>`;
-                list.appendChild(div);
-            }
-            document.getElementById('memoryOverlay').classList.add('show');
-        }
-        function closeMemory() { document.getElementById('memoryOverlay').classList.remove('show'); }
-        function deleteMemoryItem(key) {
-            delete botMemory[key];
-            localStorage.setItem('bot_memory', JSON.stringify(botMemory));
-            showMemory();
-        }
-
-        function showUserProfile(name, avatar) {
-            alert(`بروفايل: ${name}`);
-        }
-
-        function bottomNavAction(action) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            event.target.closest('.nav-btn').classList.add('active');
-            if (action === 'options') showMemory();
-            else if (action === 'online') {
-                let list = 'المتصلون:\n';
-                onlineUsers.forEach(u => list += `${u.rank} ${u.name} 🟢\n`);
-                addMessage('👥', '17.gif', list, true);
-            } else if (action === 'home') {
-                addMessage('🏠', '17.gif', 'أهلاً في الرئيسية!', true);
-            }
-        }
-
-        function loadSavedData() {
-            const name = localStorage.getItem('user_name');
-            if (name) currentUser.name = name;
-            const avatar = localStorage.getItem('user_avatar');
-            if (avatar) currentUser.avatar = avatar;
-        }
-        loadSavedData();
-    </script>
-</body>
-</html>
+    // للاختبار السريع: افتح البروفايل عند النقر على أي زر
+    document.addEventListener('DOMContentLoaded', () => {
+        // يمكنك استدعاء openProfile() من أي مكان في تطبيقك
+        console.log('البروفايل جاهز');
+    });
+</script>
